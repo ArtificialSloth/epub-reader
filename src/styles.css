@@ -1,0 +1,207 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+
+    --bg-primary:     #080d1a;
+    --bg-secondary:   #0c1427;
+    --bg-elevated:    #111e38;
+    --border-color:   #1a2540;
+    --border-hover:   #2a4070;
+
+    --text-primary:   #e0e6f0;
+    --text-secondary: #c8d0e0;
+    --text-dim:       #b8c4d8;
+    --text-muted:     #506080;
+    --text-faint:     #3a4a6a;
+
+    --accent:         #162d5a;
+    --accent-hover:   #1c3870;
+    --accent-active:  #112248;
+    --accent-border:  #2a4a80;
+
+    color: var(--text-secondary);
+    background-color: var(--bg-primary);
+}
+
+body {
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Library page */
+#library-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 24px 32px;
+}
+
+#library-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#library-header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.02em;
+}
+
+#library-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+select, button {
+    font-family: inherit;
+    font-size: 1.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.select-wrapper {
+    position: relative;
+}
+
+.select-wrapper::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid var(--text-secondary);
+    border-bottom: 2px solid var(--text-secondary);
+    transform: translateY(-65%) rotate(45deg);
+    pointer-events: none;
+}
+
+select {
+    padding: 7px 32px 7px 12px;
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    appearance: none;
+}
+
+select:hover, select:focus {
+    border-color: var(--border-hover);
+}
+
+.select-wrapper:active::after {
+    transform: translateY(-35%) rotate(225deg);
+}
+
+option {
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
+#add-book-btn {
+    padding: 7px 18px;
+    background-color: var(--accent);
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+#add-book-btn:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-border);
+}
+
+#add-book-btn:active {
+    background-color: var(--accent-active);
+}
+
+/* Book grid */
+#book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 280px);
+    gap: 24px;
+}
+
+.book-card {
+    display: flex;
+    flex-direction: column;
+    width: 280px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: transform 0.18s ease;
+}
+
+.book-card:hover {
+    transform: translateY(-5px);
+}
+
+.book-cover {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.book-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.book-cover-placeholder {
+    padding: 10px;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.book-title {
+    margin-top: 8px;
+    font-size: 1.5rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Empty state */
+#empty-library {
+    display: none;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-faint);
+    font-size: 0.95rem;
+}
+
+#empty-library.visible {
+    display: flex;
+}
+
+#empty-library strong {
+    color: var(--text-muted);
+}
