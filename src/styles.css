@@ -26,6 +26,19 @@
     --accent-active:  #112248;
     --accent-border:  #2a4a80;
 
+    --danger:         #5a2020;
+    --danger-hover:   #7a2828;
+    --danger-text:    #c08080;
+
+    --missing-bg:     #1a0a0a;
+    --missing-border: #5a2020;
+    --missing-text:   #804040;
+    --missing-label:  #5a2020;
+
+    --context-bg:     #0e1a30;
+    --context-border: #1e2e4a;
+    --context-hover:  #162240;
+
     color: var(--text-secondary);
     background-color: var(--bg-primary);
 }
@@ -133,6 +146,7 @@ option {
     display: grid;
     grid-template-columns: repeat(auto-fill, 280px);
     gap: 24px;
+    justify-content: center;
 }
 
 .book-card {
@@ -176,8 +190,15 @@ option {
     word-break: break-word;
 }
 
-.book-title {
+.book-footer {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
     margin-top: 8px;
+    gap: 4px;
+}
+
+.book-title {
     font-size: 1.5rem;
     color: var(--text-dim);
     line-height: 1.4;
@@ -188,6 +209,168 @@ option {
     overflow: hidden;
 }
 
+.book-menu-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 2px 4px 4px 4px;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 2rem;
+    line-height: 1;
+    border-radius: 4px;
+    transition: color 0.15s, background-color 0.15s;
+    letter-spacing: 0.05em;
+}
+
+.book-menu-btn:hover {
+    color: var(--text-muted);
+    background-color: var(--bg-elevated);
+}
+
+/* Context menu */
+.context-menu {
+    position: fixed;
+    background-color: var(--context-bg);
+    border: 1px solid var(--context-border);
+    border-radius: 6px;
+    padding: 6px 0;
+    min-width: 280px;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.context-menu-meta {
+    padding: 6px 14px 10px;
+    border-bottom: 1px solid var(--context-border);
+    margin-bottom: 4px;
+}
+
+.context-meta-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 2px 0;
+    font-size: 1.5rem;
+}
+
+.context-meta-label {
+    color: var(--text-faint);
+    white-space: nowrap;
+}
+
+.context-meta-value {
+    color: var(--text-muted);
+    text-align: right;
+    word-break: break-word;
+}
+
+.context-menu-item {
+    display: block;
+    width: 100%;
+    padding: 7px 14px;
+    background: none;
+    border: none;
+    text-align: center;
+    font-family: inherit;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.context-menu-item:hover {
+    background-color: var(--context-hover);
+}
+
+.context-menu-item--danger {
+    color: var(--danger-text);
+}
+
+.context-menu-item--danger:hover {
+    background-color: var(--danger);
+}
+
+/* Confirmation dialog */
+.dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.dialog {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 24px;
+    min-width: 480px;
+    max-width: 620px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+.dialog-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.dialog-message {
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.dialog-btn {
+    padding: 7px 18px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+}
+
+.dialog-btn:hover {
+    border-color: var(--border-hover);
+    background-color: var(--bg-elevated);
+}
+
+.dialog-btn--danger {
+    background-color: var(--danger);
+    border-color: var(--missing-border);
+    color: var(--danger-text);
+}
+
+.dialog-btn--danger:hover {
+    background-color: var(--danger-hover);
+}
+
+/* Missing source indicator */
+.book-cover--missing {
+    border-color: var(--missing-border);
+    background-color: var(--missing-bg);
+}
+
+.book-cover--missing .book-cover-placeholder {
+    color: var(--missing-text);
+}
+
+.book-cover--missing .book-cover-placeholder::after {
+    content: 'No valid sources found';
+    display: block;
+    margin-top: 8px;
+    font-size: 1.5rem;
+    color: var(--missing-label);
+}
+
 /* Empty state */
 #empty-library {
     display: none;
@@ -195,7 +378,7 @@ option {
     align-items: center;
     justify-content: center;
     color: var(--text-faint);
-    font-size: 0.95rem;
+    font-size: 2rem;
 }
 
 #empty-library.visible {
