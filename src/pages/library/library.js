@@ -3,6 +3,12 @@ import { openContextMenu } from '../../components/context-menu/context-menu.js';
 const { invoke } = window.__TAURI__.core;
 const { open: openDialog } = window.__TAURI__.dialog;
 
+let openBookCallback = null;
+
+export function setOpenBookCallback(fn) {
+    openBookCallback = fn;
+}
+
 export function getSortPreference() {
     return localStorage.getItem('sort') || 'recently-added';
 }
@@ -63,6 +69,17 @@ function createBookCard(identifier, book) {
 
     card.appendChild(coverDiv);
     card.appendChild(footer);
+
+    card.addEventListener('click', async () => {
+        let openedBook;
+        try {
+            openedBook = await invoke('open_book', { identifier });
+        } catch (err) {
+            console.error('Failed to open book:', err);
+            return;
+        }
+        openBookCallback?.(identifier, openedBook);
+    });
 
     card.addEventListener('contextmenu', e => {
         e.preventDefault();

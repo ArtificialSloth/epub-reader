@@ -1,4 +1,5 @@
-use std::{collections::HashMap, sync::Mutex, time::Instant};
+use std::{collections::HashMap, sync::Mutex, time::Instant, io::BufReader, fs::File};
+use epub::doc::EpubDoc;
 
 pub type Library = HashMap<String, Book>;
 
@@ -11,10 +12,15 @@ pub struct Book {
     pub opened: u64,
     pub num_chapters: usize,
     pub current_chapter: usize,
-    pub scroll_position: f64,
+    pub current_position: usize,
+}
+
+pub struct LibraryState {
+    pub library: Library,
+    pub last_save: Instant,
 }
 
 pub struct AppState {
-    pub library: Mutex<Library>,
-    pub last_save: Mutex<Instant>,
+    pub library_state: Mutex<LibraryState>,
+    pub current_book: Mutex<Option<EpubDoc<BufReader<File>>>>,
 }

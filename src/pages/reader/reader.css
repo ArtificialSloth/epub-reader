@@ -1,1 +1,316 @@
-/* Reader page — stub */
+/* ===== Layout ===== */
+
+#reader-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ===== Header ===== */
+
+#reader-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 78px;
+    flex-shrink: 0;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+#reader-header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.reader-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 2.1rem;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.reader-icon-btn:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.reader-font-icon {
+    font-size: 2rem;
+    font-weight: 600;
+    width: auto;
+    padding: 0 10px;
+}
+
+/* ===== Body ===== */
+
+#reader-body {
+    flex: 1;
+    position: relative;
+    display: flex;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* ===== Nav Zones ===== */
+
+.reader-nav-zone {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: opacity 0.5s;
+}
+
+#reader-prev-zone { left: 0; }
+#reader-next-zone { right: 0; }
+
+.reader-nav-arrow {
+    font-size: 4.5rem;
+    color: var(--text-secondary);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+#reader-page.arrows-faded .reader-nav-zone {
+    opacity: 0.1;
+}
+
+/* ===== Page Content ===== */
+
+#reader-columns-wrapper {
+    flex: 1;
+    overflow: hidden;
+    padding: 6rem 12rem;
+    min-width: 0;
+    clip-path: inset(0 12rem);
+}
+
+#reader-columns {
+    column-count: 2;
+    column-fill: auto;
+    column-gap: 4rem;
+    height: 100%;
+    line-height: 1.75;
+    color: var(--text-secondary);
+}
+
+#reader-columns p {
+    margin-bottom: 0.75em;
+}
+
+#reader-columns h1,
+#reader-columns h2,
+#reader-columns h3,
+#reader-columns h4,
+#reader-columns h5,
+#reader-columns h6 {
+    color: var(--text-primary);
+    margin: 1.2em 0 1.2em;
+    text-align: center;
+}
+
+#reader-columns a:any-link {
+    color: var(--accent-border);
+    text-decoration: none;
+}
+
+#reader-columns img,
+#reader-columns image {
+    max-width: 100%;
+    break-inside: avoid;
+}
+
+.reader-loading,
+.reader-error {
+    color: var(--text-muted);
+    font-size: 1.3rem;
+    padding: 2rem 0;
+}
+
+/* ===== Page Label ===== */
+
+#reader-page-label {
+    text-align: center;
+    padding: 5px 0 7px;
+    font-size: 1.3rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    cursor: default;
+    transition: color 0.2s;
+    user-select: none;
+}
+
+/* ===== Footer / Progress Bar ===== */
+
+#reader-footer {
+    flex-shrink: 0;
+    height: 36px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    padding: 6px 8px;
+}
+
+#reader-progress-bar {
+    display: flex;
+    height: 100%;
+    gap: 2px;
+    overflow: visible;
+}
+
+.progress-section {
+    flex: 1;
+    background: var(--text-faint);
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.15s;
+    min-width: 2px;
+}
+
+.progress-section--past { background: var(--accent-hover); }
+.progress-section--current { background: var(--accent-border); }
+.progress-section:hover { background: var(--border-hover); }
+.progress-section--past:hover { background: var(--accent-border); }
+.progress-section--current:hover { background: var(--text-dim); }
+
+.progress-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--context-bg);
+    border: 1px solid var(--context-border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 1.2rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    color: var(--text-secondary);
+}
+
+.progress-section:hover .progress-tooltip { opacity: 1; }
+
+/* ===== Font Menu ===== */
+
+.reader-font-menu {
+    position: absolute;
+    top: 56px;
+    right: 8px;
+    z-index: 100;
+    background: var(--context-bg);
+    border: 1px solid var(--context-border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.reader-font-menu.hidden { display: none; }
+
+.font-menu-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.font-menu-label {
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.font-menu-controls {
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    gap: 8px;
+    flex: 1;
+}
+
+.font-size-btn {
+    padding: 4px;
+    background: var(--bg-elevated);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+    font-size: 1.3rem;
+}
+
+.font-size-btn:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-border);
+    color: var(--text-primary);
+}
+
+#font-size-display {
+    font-size: 1.3rem;
+    color: var(--text-dim);
+    min-width: 36px;
+    text-align: center;
+}
+
+.font-family-btn {
+    flex: 1;
+    height: 32px;
+    padding: 0 8px;
+    background: var(--bg-elevated);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+    font-size: 1.3rem;
+}
+
+.font-family-btn:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-border);
+    color: var(--text-primary);
+}
+
+.font-family-btn.active {
+    background: var(--accent);
+    border-color: var(--accent-border);
+    color: var(--text-primary);
+}
+
+/* ===== Fullscreen ===== */
+
+#reader-fullscreen-exit {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 200;
+    display: none;
+}
+
+#reader-page.fullscreen #reader-header,
+#reader-page.fullscreen #reader-footer,
+#reader-page.fullscreen #reader-page-label {
+    display: none;
+}
+
+#reader-page.fullscreen #reader-fullscreen-exit {
+    display: flex;
+}

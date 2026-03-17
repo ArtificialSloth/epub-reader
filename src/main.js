@@ -1,4 +1,5 @@
-import { renderLibrary, addBook, getSortPreference, setSortPreference } from './pages/library/library.js';
+import { renderLibrary, addBook, getSortPreference, setSortPreference, setOpenBookCallback } from './pages/library/library.js';
+import { initReader, cleanupReader } from './pages/reader/reader.js';
 import { closeActiveMenu } from './components/context-menu/context-menu.js';
 
 const { getCurrentWindow, LogicalSize } = window.__TAURI__.window;
@@ -11,10 +12,25 @@ async function initWindow() {
     await win.center();
 }
 
+async function showLibraryPage() {
+    await getCurrentWindow().setTitle('Epub Reader');
+    document.getElementById('reader-page').style.display = 'none';
+    document.getElementById('library-page').style.display = '';
+    await renderLibrary();
+}
+
+async function showReaderPage(identifier, book) {
+    document.getElementById('library-page').style.display = 'none';
+    document.getElementById('reader-page').style.display = 'flex';
+    await initReader(identifier, book, showLibraryPage);
+}
+
 document.addEventListener('click', closeActiveMenu);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeActiveMenu(); });
 
 await initWindow();
+
+setOpenBookCallback(showReaderPage);
 
 const sortSelect = document.getElementById('sort-select');
 sortSelect.value = getSortPreference();
