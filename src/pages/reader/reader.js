@@ -154,11 +154,11 @@ async function paginate(html) {
 
     const doc = new DOMParser().parseFromString(html, 'text/html');
     doc.querySelectorAll('script').forEach(el => el.remove());
-    doc.querySelectorAll('img, image').forEach(img => {
+    doc.querySelectorAll('img, image, svg').forEach(img => {
         //img.removeAttribute('width');
         //img.removeAttribute('height');
         img.style.maxWidth = '100%';
-        img.style.maxHeight = `${Math.floor(cols.clientHeight * 0.99)}px`;
+        img.style.maxHeight = `${Math.floor(cols.clientHeight * 0.9)}px`;
     });
 
     cols.style.transform = 'none';

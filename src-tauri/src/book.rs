@@ -71,11 +71,14 @@ pub fn close_book(state: State<'_, AppState>) -> Result<(), String> {
 pub fn get_chapter(state: State<'_, AppState>, index: usize) -> Result<String, String> {
     let mut current_book = state.current_book.lock().unwrap();
     let doc = current_book.as_mut().ok_or_else(|| format!("No currently opened book"))?;
-    
     doc.set_current_chapter(index);
-    let data = doc.get_current_with_epub_uris().map_err(|e| e.to_string())?;
     
-    Ok(String::from_utf8(data).map_err(|e| e.to_string())?)
+    let data = doc.get_current_with_epub_uris().map_err(|e| e.to_string())?;
+    let content = String::from_utf8(data).map_err(|e| e.to_string())?;
+    #[cfg(target_os = "windows")]
+    let content = content.replace("epub://", "http://epub.localhost/");
+
+    Ok(content)
 }
 
 #[tauri::command]

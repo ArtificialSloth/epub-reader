@@ -136,9 +136,18 @@
 }
 
 #reader-columns img,
-#reader-columns image {
+#reader-columns image,
+#reader-columns div:has(svg) {
     max-width: 100%;
     break-inside: avoid;
+}
+
+#reader-columns:has(.reader-loading),
+#reader-columns:has(.reader-error) {
+    column-count: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .reader-loading,

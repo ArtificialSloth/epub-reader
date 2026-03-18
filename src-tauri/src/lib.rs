@@ -18,7 +18,7 @@ pub fn run() {
             library_state: Mutex::new(library_state),
             current_book: Mutex::new(None),
         })
-        .register_uri_scheme_protocol("epub", |ctx, request| {
+        .register_uri_scheme_protocol("epub", |ctx, request| { 
             let state = ctx.app_handle().state::<AppState>();
             let mut current_book = state.current_book.lock().unwrap();
             let Some(doc) = current_book.as_mut() else {
@@ -26,10 +26,14 @@ pub fn run() {
             };
 
             let uri = request.uri().to_string();
+            #[cfg(not(target_os = "windows"))]
             let path = uri.trim_start_matches("epub://");
+            #[cfg(target_os = "windows")]
+            let path = uri.trim_start_matches("epub://localhost/");
+            
             let data = doc.get_resource_by_path(path);
             let mime = doc.get_resource_mime_by_path(path);
-            
+
             data.zip(mime)
                 .map(|(data, mime)| {
                     http::Response::builder()
