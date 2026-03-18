@@ -1,0 +1,13 @@
+select {
+    padding: 7px 32px 7px 12px;
+    background-color: var(--bg-secondary);
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    color: var(--text-primary);
+    appearance: none;
+}
+
+option {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
