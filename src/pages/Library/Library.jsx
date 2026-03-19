@@ -2,8 +2,8 @@ import './Library.css'
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog'
-import Select from '@/components/Select/Select'
 import Header from '@/components/Header/Header'
+import Select from '@/components/Select/Select'
 import BookCard from './BookCard/BookCard'
 
 function Library() {
@@ -25,13 +25,13 @@ function Library() {
             filters: [{ name: 'Epub Files', extensions: ['epub'] }]
         });
         if (!paths || paths.length === 0) return;
-        await Promise.all(paths.map(path => invoke('add_book', {path})));
+        await Promise.all(paths.map(path => invoke('add_book', { path })));
         await fetchLibrary();
     }
 
     async function removeBook(identifier) {
         if (!identifier) return;
-        await invoke('remove_book', {identifier});
+        await invoke('remove_book', { identifier });
         await fetchLibrary();
     }
 

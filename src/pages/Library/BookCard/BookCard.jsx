@@ -1,6 +1,7 @@
 import './BookCard.css'
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { usePage } from '@/PageContext'
 import ContextMenu from '@/components/ContextMenu/ContextMenu';
 import PopUp from '@/components/PopUp/PopUp';
 
@@ -9,14 +10,15 @@ function formatDate(timestamp) {
     return new Date(timestamp * 1000).toLocaleDateString();
 }
 
-function BookCard({identifier, book, onRemove}) { 
+function BookCard({ identifier, book, onRemove }) {
+    const { navigate } = usePage();
     const [menuPos, setMenuPos] = useState(null);
     const [popupOpen, setPopupOpen] = useState(false);
     const [cover, setCover] = useState('loading');
     useEffect(() => {
         async function fetchCover() {
             try {
-                setCover(await invoke('get_cover', {identifier}));
+                setCover(await invoke('get_cover', { identifier }));
             } catch (err) {
                 console.error(err);
                 setCover('error');
@@ -25,23 +27,34 @@ function BookCard({identifier, book, onRemove}) {
         fetchCover();
     }, [identifier]);
 
-    function onClickRemoveBtn() {
+    async function onClick() {
+        try {
+            const result = await invoke('open_book', { identifier });
+            navigate('reader', { identifier, initBook: result });
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function onClickRemoveBtn(e) {
+        e.stopPropagation();
         setMenuPos(null);
         setPopupOpen(true);
     }
 
     function onClickContextBtn(e) {
+        e.stopPropagation();
         const rect = e.currentTarget.getBoundingClientRect();
-        setMenuPos({x: rect.left, y: rect.bottom + 4});
+        setMenuPos({ x: rect.left, y: rect.bottom + 4 });
     }
 
     function onContextMenu(e) {
         e.preventDefault();
-        setMenuPos({x: e.clientX, y: e.clientY});
+        setMenuPos({ x: e.clientX, y: e.clientY });
     }
 
     return (
-        <div className='book-card' onContextMenu={onContextMenu}>
+        <div className='book-card' onClick={onClick} onContextMenu={onContextMenu}>
             <div className='book-cover'>
                 {(() => {
                     if (cover === 'error') return (
@@ -60,7 +73,7 @@ function BookCard({identifier, book, onRemove}) {
                 <button className='book-context-btn' onClick={onClickContextBtn}>⋮</button>
                 {menuPos && (
                     <ContextMenu x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
-                        <div className='context-meta'>
+                        <div className='context-meta' onClick={e => e.stopPropagation()}>
                             <div className='context-meta-label'>Author:</div>
                             <div className='context-meta-item'>{book.author}</div>
                             <div className='context-meta-label'>Added:</div>
@@ -74,11 +87,11 @@ function BookCard({identifier, book, onRemove}) {
                     </ContextMenu>
                 )}
                 {popupOpen && (
-                    <PopUp onConfirm={() => onRemove(identifier)} onClose={() => setPopupOpen(false)}>
+                    <PopUp onConfirm={e => { e.stopPropagation(); onRemove(identifier) }} onClose={() => setPopupOpen(false)}>
                         <p className='popup-label'>Remove "{book.title}"?</p>
                         <p className='popup-text'>The file will remain, but all saved progress will be lost.</p>
                         <div className='popup-actions'>
-                            <button onClick={() => setPopupOpen(false)}>Cancel</button>
+                            <button onClick={e => { e.stopPropagation(); setPopupOpen(false) }}>Cancel</button>
                             <button className='danger' onClick={() => onRemove(identifier)}>Remove</button>
                         </div>
                     </PopUp>

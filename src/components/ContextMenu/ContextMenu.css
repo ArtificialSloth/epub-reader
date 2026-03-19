@@ -1,22 +1,22 @@
 .context-menu {
-    position: fixed;
-    z-index: 1000;
     background: var(--panel-bg);
     border: 1px solid var(--panel-border);
     border-radius: 6px;
-    padding: 4px;
-    min-width: 160px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    min-width: 160px;
+    padding: 4px;
+    position: fixed;
+    z-index: 1000;
 }
 
 .context-menu button {
-    display: block;
-    width: 100%;
-    padding: 6px 12px;
     background: none;
     border: none;
     color: var(--text-primary);
+    display: block;
+    padding: 6px 12px;
     text-align: center;
+    width: 100%;
 }
 
 .context-menu button:not(:first-child) {
@@ -28,8 +28,8 @@
 }
 
 .context-menu button.danger {
-    text-align: center;
     color: var(--text-danger);
+    text-align: center;
 }
 
 .context-menu button.danger:hover {

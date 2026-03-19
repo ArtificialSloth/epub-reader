@@ -1,6 +1,6 @@
 import './Header.css'
 
-function Header({left, right}) {
+function Header({ left, right }) {
     return (
         <header className='header'>
             <div className='header-left'>{left}</div>

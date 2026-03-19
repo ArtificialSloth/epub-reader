@@ -1,10 +1,10 @@
 .popup-overlay {
-    position: fixed;
-    inset: 0;
+    align-items: center;
     background: rgba(0, 0, 0, 0.6);
     display: flex;
-    align-items: center;
+    inset: 0;
     justify-content: center;
+    position: fixed;
     z-index: 1000;
 }
 
@@ -12,8 +12,8 @@
     background: var(--panel-bg);
     border: 1px solid var(--panel-border);
     border-radius: 8px;
-    padding: 24px;
     max-width: 30vw;
+    padding: 24px;
     width: 90%;
 }
 
@@ -30,28 +30,28 @@
 
 .popup-actions {
     display: flex;
-    justify-content: flex-end;
     gap: 0.5rem;
+    justify-content: flex-end;
 }
 
 .popup-actions button {
-    padding: 7px 18px;
-    color: var(--text-primary);
     background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 7px 18px;
 }
 
 .popup-actions button:hover {
-    border-color: var(--border-hover);
     background-color: var(--bg-elevated);
+    border-color: var(--border-hover);
 }
 
 .popup-actions button.danger {
-    color: var(--text-danger);
-    border-color: var(--danger-hover);
     background-color: var(--bg-danger);
+    border-color: var(--danger-hover);
+    color: var(--text-danger);
 }
 
 .popup-actions button.danger:hover {
-    border-color: var(--border-hover);
     background-color: var(--danger-hover);
+    border-color: var(--border-hover);
 }

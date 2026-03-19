@@ -82,15 +82,16 @@ pub fn get_chapter(state: State<'_, AppState>, index: usize) -> Result<String, S
 }
 
 #[tauri::command]
-pub fn save_progress(state: State<'_, AppState>, identifier: String, chapter_index: usize, position_index: usize) -> Result<(), String> {
+pub fn save_progress(state: State<'_, AppState>, identifier: String, chapter_index: usize, position_index: usize) -> Result<Book, String> {
     let mut library_state = state.library_state.lock().unwrap();
     let book = library_state.library.get_mut(&identifier).ok_or_else(|| format!("No entry for {}", identifier))?;
 
     book.current_chapter = chapter_index;
     book.current_position = position_index;
+    let book = book.clone();
 
     if library_state.last_save.elapsed() > Duration::from_secs(1) {
         library::save(&mut library_state)?;
     }
-    Ok(())
+    Ok(book)
 }

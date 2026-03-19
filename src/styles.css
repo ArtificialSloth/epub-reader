@@ -46,12 +46,12 @@ body {
 }
 
 select, button {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
     font-family: inherit;
     font-size: 1rem;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
     outline: none;
-    cursor: pointer;
     transition: border-color 0.2s;
 }
 
@@ -64,21 +64,21 @@ select:hover, select:focus {
 }
 
 .loader-wrapper {
+    align-items: center;
     display: flex;
     flex: 1;
     justify-content: center;
-    align-items: center;
 }
 
 .loader {
-  width: 120px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  opacity: 0.25;
-  border: 1rem solid var(--text-faint);
   animation:
     l20-1 0.8s infinite linear alternate,
     l20-2 1.6s infinite linear;
+  aspect-ratio: 1;
+  border: 1rem solid var(--text-faint);
+  border-radius: 50%;
+  opacity: 0.25;
+  width: 120px;
 }
 
 @keyframes l20-1{

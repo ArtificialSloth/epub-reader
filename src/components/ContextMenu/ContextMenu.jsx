@@ -2,7 +2,7 @@ import './ContextMenu.css'
 import { createPortal } from 'react-dom'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 
-function ContextMenu({x, y, onClose, children}) {
+function ContextMenu({ x, y, onClose, children }) {
     const ref = useRef(null);
 
     useLayoutEffect(() => {
@@ -28,7 +28,7 @@ function ContextMenu({x, y, onClose, children}) {
     }, [onClose]);
 
     return createPortal(
-        <div ref={ref} className='context-menu' style={{left: x, top: y}} onMouseDown={e => e.stopPropagation()}>
+        <div ref={ref} className='context-menu' style={{ left: x, top: y }} onMouseDown={e => e.stopPropagation()}>
             {children}
         </div>,
         document.body
