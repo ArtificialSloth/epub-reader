@@ -16,7 +16,7 @@
     border: none;
     color: var(--text-secondary);
     display: flex;
-    padding: 4px;
+    padding: 8px;
     transition: background-color 0.15s, color 0.15s;
 }
 

@@ -4,12 +4,12 @@ import { useEffect, useRef } from 'react'
 
 function PopUp({ onConfirm, onClose, children }) {
     useEffect(() => {
-        function handleKey(e) {
+        function onKeyDown(e) {
             if (e.key === 'Escape') onClose();
             if (e.key === 'Enter') onConfirm();
         }
-        document.addEventListener('keydown', handleKey);
-        return () => document.removeEventListener('keydown', handleKey);
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
     }, [onClose]);
 
     return createPortal(

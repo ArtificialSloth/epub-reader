@@ -57,10 +57,14 @@ function Reader({ identifier, initBook }) {
         }
     }
 
-    document.addEventListener('keydown', (e) => {
-        if (e.key == 'ArrowLeft') prevChapter(e)
-        else if (e.key == 'ArrowRight') nextChapter(e);
-    });
+    useEffect(() => {
+        function onKeyDown(e) {
+            if (e.key === 'ArrowLeft') prevChapter(e)
+            else if (e.key === 'ArrowRight') nextChapter(e);
+        }
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [book.current_chapter]);
 
     return (
         <div className='reader'>
