@@ -12,28 +12,21 @@ function formatDate(timestamp) {
 
 function BookCard({ identifier, book, onRemove }) {
     const { navigate } = usePage();
+
     const [menuPos, setMenuPos] = useState(null);
     const [popupOpen, setPopupOpen] = useState(false);
     const [cover, setCover] = useState('loading');
     useEffect(() => {
-        async function fetchCover() {
-            try {
-                setCover(await invoke('get_cover', { identifier }));
-            } catch (err) {
-                console.error(err);
-                setCover('error');
-            }
-        }
-        fetchCover();
+        invoke('get_cover', { identifier }).then(data => setCover(data)).catch(err => {
+            console.error(err);
+            setCover('error');
+        })
     }, [identifier]);
 
     async function onClick() {
-        try {
-            const result = await invoke('open_book', { identifier });
-            navigate('reader', { identifier, initBook: result });
-        } catch (err) {
-            console.error(err);
-        }
+        await invoke('open_book', { identifier })
+            .then(result => navigate('reader', { identifier, book: result }))
+            .catch(err => console.log(err));
     }
 
     function onClickRemoveBtn(e) {

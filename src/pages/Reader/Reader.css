@@ -8,6 +8,8 @@
 .reader .header {
     margin-left: 32px;
     margin-right: 32px;
+    padding-bottom: 8px;
+    padding-top: 16px;
 }
 
 .reader .header button {
@@ -30,94 +32,13 @@
 }
 
 .reader-body {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
     height:100%;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.chapter-wrapper {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-}
-
-.chapter-nav {
-    align-items: center;
-    align-self: center;
-    color: var(--text-muted);
-    cursor: pointer;
-    display: flex;
-    height: 50vh;
-    opacity: 0.1;
-    transition: opacity 0.15s;
-    user-select: none;
-}
-
-.chapter-nav:hover { opacity: 1; }
-.chapter-nav.prev { padding: 0 16px 0 32px; }
-.chapter-nav.next { padding: 0 32px 0 16px; }
-
-.chapter-content {
-    flex: 1;
-    overflow: auto;
-}
-
-.chapter-progress {
-    color: var(--text-muted);
-    margin-top: 8px;
-    text-align: center;
 }
 
 .reader-footer {
-    border-top: 1px solid var(--border-color);
+    align-items: center;
+    color: var(--text-muted);
     display: flex;
-    margin: 16px 32px 0 32px;
-    padding: 16px 0;
+    flex-direction: column;
+    margin: 0 32px 32px 32px;
 }
-
-.progress-bar {
-    display: flex;
-    gap: 2px;
-    height: 24px;
-    overflow: visible;
-    width: 100%;
-}
-
-.progress-section {
-    background-color: var(--bg-elevated);
-    border-radius: 4px;
-    cursor: pointer;
-    flex: 1;
-    min-width: 2px;
-    position: relative;
-    transition: background-color 0.15s;
-    user-select: none;
-}
-
-.progress-section.past { background-color: var(--accent-hover) }
-.progress-section.current { background-color: var(--accent-border) }
-
-.progress-section:hover { background-color: var(--border-hover) }
-.progress-section.past:hover { background-color: var(--accent-border) }
-.progress-section.current:hover { background-color: var(--text-dim) }
-
-.progress-tip {
-    background-color: var(--panel-bg);
-    border: 1px solid var(--panel-border);
-    border-radius: 4px;
-    bottom: calc(100% + 8px);
-    color: var(--text-secondary);
-    left: 50%;
-    opacity: 0;
-    padding: 6px 8px 4px 8px;
-    pointer-events: none;
-    position: absolute;
-    transform: translateX(-50%);
-    transition: opacity 0.15s;
-    white-space: nowrap;
-}
-
-.progress-section:hover .progress-tip { opacity: 1; }

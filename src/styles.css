@@ -23,6 +23,7 @@
     --text-dim:       #b8c4d8;
     --text-muted:     #506080;
     --text-faint:     #3a4a6a;
+    --text-link:      #5b8ac7;
     --text-error:     #804040;
     --text-danger:    #c08080;
 
@@ -67,6 +68,7 @@ select:hover, select:focus {
     align-items: center;
     display: flex;
     flex: 1;
+    height: 100%;
     justify-content: center;
 }
 

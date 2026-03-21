@@ -1,76 +1,164 @@
 import './Reader.css'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { ReactReader, ReactReaderStyle } from 'react-reader'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { usePage } from '@/PageContext'
 import Header from '@/components/Header/Header'
 
-function Reader({ identifier, initBook }) {
+const bgPrimary = getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim();
+const textPrimary = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
+const textSecondary = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+const textMuted = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
+const textLink = getComputedStyle(document.documentElement).getPropertyValue('--text-link').trim();
+const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
+
+const readerStyles = {
+    ...ReactReaderStyle,
+    readerArea: {
+        ...ReactReaderStyle.readerArea,
+        background: bgPrimary,
+    },
+    containerExpanded: {
+        ...ReactReaderStyle.containerExpanded,
+        transform: 'translateX(384px)',
+    },
+    arrow: {
+        ...ReactReaderStyle.arrow,
+        color: textMuted,
+        opacity: 0.1,
+        padding: '0 32px',
+    },
+    arrowHover: {
+        ...ReactReaderStyle.arrowHover,
+        opacity: 1,
+    },
+    tocBackground: {
+        ...ReactReaderStyle.tocBackground,
+        left: 384,
+    },
+    tocArea: {
+        ...ReactReaderStyle.tocArea,
+        background: bgPrimary,
+        width: 384,
+    },
+    tocAreaButton: {
+        ...ReactReaderStyle.tocAreaButton,
+        borderBottom: `1px solid ${borderColor}`,
+        borderRadius: 0,
+        color: textSecondary,
+        paddingLeft: 44,
+    },
+    tocButton: {
+        ...ReactReaderStyle.tocButton,
+        color: textMuted,
+        left: 36,
+        top: 0,
+    },
+    tocButtonExpanded: {
+        ...ReactReaderStyle.tocButtonExpanded,
+        background: bgPrimary,
+    },
+    tocButtonBar: {
+        ...ReactReaderStyle.tocButtonBar,
+        background: textMuted,
+    },
+};
+
+const contentStyles = {
+    body: { background: `${bgPrimary}`, color: `${textPrimary}`, 'font-size': '18px' },
+    h1: { 'text-align': 'center !important' },
+    a: { color: `${textLink}` },
+};
+
+function baseHref(href) { return href.split("#")[0].split("/").pop(); }
+function trimHref(href) { return href.startsWith('../') ? href.slice('../'.length) : href; }
+
+function Reader({ identifier, book }) {
     const { navigate } = usePage();
-    const [book, setBook] = useState(initBook);
+
+    const [epubData, setEpubData] = useState(null);
+    const [location, setLocation] = useState(book.current_location || 0);
+    const [chapter, setChapter] = useState('');
+    const [page, setPage] = useState('');
+    const renditionRef = useRef(null);
+    const tocRef = useRef(null);
+    const indexedTocRef = useRef([]);
+
+    useEffect(() => {
+        fetch('epub://book.epub').then(res => res.arrayBuffer()).then(setEpubData);
+    }, []);
 
     const [isFullscreen, setIsFullscreen] = useState(false);
     useEffect(() => {
         const win = getCurrentWindow();
-        async function checkFullscreen() {
-            setIsFullscreen(await win.isFullscreen());
-        }
         win.setTitle(book.title);
-        checkFullscreen();
-    }, []);
+        win.isFullscreen().then(setIsFullscreen);
+    }, [book.title]);
 
-    const [chapter, setChapter] = useState('');
-    async function fetchChapter(index) {
-        try {
-            const result = await invoke('get_chapter', { index });
-            const doc = new DOMParser().parseFromString(result, 'text/html');
-
-            doc.querySelectorAll('script').forEach(el => el.remove());
-            setChapter(doc.body.innerHTML);
-
-            const newBook = await invoke('save_progress', { identifier, chapterIndex: index, positionIndex: 0 })
-            setBook(newBook);
-        } catch (err) {
-            console.error(err);
-        }
-    }
-    useEffect(() => { fetchChapter(book.current_chapter) }, []);
-
-    async function setFullscreen(fs) {
+    function setFullscreen(fsn) {
         const win = getCurrentWindow();
-        win.setFullscreen(fs).then(async () => {
-            setIsFullscreen(await win.isFullscreen());
-        })
+        win.setFullscreen(fsn).then(() => win.isFullscreen().then(setIsFullscreen))
     }
 
-    function prevChapter(e) {
-        e.preventDefault();
-        if (book.current_chapter > 0) {
-            fetchChapter(book.current_chapter - 1);
+    function tryIndexToc() {
+        if (!renditionRef.current || !tocRef.current) return;
+
+        const indexedToc = [];
+        for (const entry of tocRef.current) {
+            const spineItem = renditionRef.current.book.spine.spineItems.find(s => baseHref(s.href) === baseHref(entry.href));
+            if (!spineItem) continue;
+
+            indexedToc.push({ ...entry, index: spineItem.index });
+            indexedTocRef.current = indexedToc;
         }
     }
 
-    function nextChapter(e) {
-        e.preventDefault();
-        if (book.current_chapter < book.num_chapters) {
-            fetchChapter(book.current_chapter + 1);
-        }
-    }
+    const onLocationChanged = useCallback((loc) => {
+        loc = trimHref(loc);
+        setLocation(loc);
 
-    useEffect(() => {
-        function onKeyDown(e) {
-            if (e.key === 'ArrowLeft') prevChapter(e)
-            else if (e.key === 'ArrowRight') nextChapter(e);
+        const indexedToc = indexedTocRef.current;
+        if (renditionRef.current && tocRef.current && indexedToc) {
+            const { displayed, href, index } = renditionRef.current.location.start;
+            setPage(`${Math.round(displayed.page / 2)} / ${Math.round(displayed.total / 2)}`);
+
+            const tocEntry = tocRef.current.find(entry => entry.href === href) ??
+                indexedToc.find(entry => baseHref(entry.href) === baseHref(href)) ??
+                indexedToc.findLast(entry => entry.index <= index);
+            setChapter(tocEntry ? tocEntry.label : '');
         }
-        document.addEventListener('keydown', onKeyDown);
-        return () => document.removeEventListener('keydown', onKeyDown);
-    }, [book.current_chapter]);
+
+        if (loc.startsWith('epubcfi')) {
+            invoke('save_progress', { identifier, location: loc })
+        };
+    }, [identifier]);
+
+    function getRendition(rendition) {
+        rendition.themes.register('styles', contentStyles);
+        rendition.themes.select('styles');
+
+        rendition.hooks.content.register((contents) => {
+            const doc = contents.document;
+            doc.querySelectorAll('link[rel="stylesheet"], style:not(#epubjs-inserted-css-, #epubjs-inserted-css-styles)')
+                .forEach(el => el.remove());
+        });
+
+        renditionRef.current = rendition;
+        tryIndexToc();
+    };
+
+    async function onClickBackBtn(e) {
+        await invoke('save_progress', { identifier, location });
+        await invoke('close_book');
+        navigate('library');
+    }
 
     return (
         <div className='reader'>
             <Header
                 left={(
-                    <button className='reader-back-btn' onClick={() => navigate('library')} >
+                    <button className='reader-back-btn' onClick={onClickBackBtn} >
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
                     </button>
                 )}
@@ -89,26 +177,24 @@ function Reader({ identifier, initBook }) {
                 )}
             />
             <div className='reader-body'>
-                <div className='chapter-wrapper'>
-                    <div className='chapter-nav prev' onClick={prevChapter}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-                    </div>
-                    <div className='chapter-content' dangerouslySetInnerHTML={{ __html: chapter }} />
-                    <div className='chapter-nav next' onClick={nextChapter}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
-                    </div>
-                </div>
-                <div className='chapter-progress'>0 / 1 ({Math.round((book.current_chapter / book.num_chapters) * 100)}%)</div>
+                {epubData ? (
+                    <ReactReader
+                        url={epubData}
+                        location={location}
+                        locationChanged={onLocationChanged}
+                        tocChanged={toc => { tocRef.current = toc; tryIndexToc(); }}
+                        epubOptions={{
+                            allowScriptedContent: true,
+                        }}
+                        getRendition={getRendition}
+                        readerStyles={readerStyles}
+                    />
+                ) : <div className='loader-wrapper'><div className='loader'></div></div>}
             </div>
-            <footer className='reader-footer'>
-                <div className='progress-bar'>
-                    {Array.from({ length: book.num_chapters }, (_, i) => (
-                        <div key={i} className={'progress-section ' + (i < book.current_chapter ? 'past' : i == book.current_chapter ? 'current' : '')} onClick={() => fetchChapter(i)}>
-                            <div className='progress-tip'>{i} / {book.num_chapters}</div>
-                        </div>
-                    ))}
-                </div>
-            </footer >
+            <div className='reader-footer'>
+                <p>{page}</p>
+                <p>{chapter}</p>
+            </div>
         </div >
     );
 }

@@ -8,7 +8,7 @@ function Routes() {
     const { page } = usePage();
     switch (page.name) {
         case 'library': return <Library />;
-        case 'reader': return <Reader identifier={page.identifier} initBook={page.initBook} />;
+        case 'reader': return <Reader identifier={page.identifier} book={page.book} />;
         default: return <Library />;
     };
 }

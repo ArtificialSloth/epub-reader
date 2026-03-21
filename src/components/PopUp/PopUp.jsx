@@ -1,6 +1,6 @@
 import './PopUp.css'
 import { createPortal } from 'react-dom'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 
 function PopUp({ onConfirm, onClose, children }) {
     useEffect(() => {

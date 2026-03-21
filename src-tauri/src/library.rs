@@ -64,12 +64,11 @@ pub fn add_book(state: State<'_, AppState>, path: String) -> Result<Book, String
         .or_insert(Book {
             title,
             author,
-            sources: vec![path],
+            sources: vec![path.clone()],
             added: now,
             opened: now,
             num_chapters: doc.get_num_chapters(),
-            current_chapter: 0,
-            current_position: 0,
+            ..Default::default()
         })
         .clone();
 
