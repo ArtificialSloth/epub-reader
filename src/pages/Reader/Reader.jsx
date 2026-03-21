@@ -1,7 +1,7 @@
 import './Reader.css'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ReactReader, ReactReaderStyle } from 'react-reader'
-import { invoke } from '@tauri-apps/api/core'
+import { invoke, convertFileSrc } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { usePage } from '@/PageContext'
 import Header from '@/components/Header/Header'
@@ -86,7 +86,7 @@ function Reader({ identifier, book }) {
     const indexedTocRef = useRef([]);
 
     useEffect(() => {
-        fetch('epub://book.epub').then(res => res.arrayBuffer()).then(setEpubData);
+        fetch(convertFileSrc('book.epup', 'epub')).then(res => res.arrayBuffer()).then(setEpubData).catch(err => console.error(err));
     }, []);
 
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -98,7 +98,7 @@ function Reader({ identifier, book }) {
 
     function setFullscreen(fsn) {
         const win = getCurrentWindow();
-        win.setFullscreen(fsn).then(() => win.isFullscreen().then(setIsFullscreen))
+        win.setFullscreen(fsn).then(() => win.isFullscreen().then(setIsFullscreen)).catch(err => console.error(err));
     }
 
     function tryIndexToc() {
@@ -130,7 +130,7 @@ function Reader({ identifier, book }) {
         }
 
         if (loc.startsWith('epubcfi')) {
-            invoke('save_progress', { identifier, location: loc })
+            invoke('save_progress', { identifier, location: loc });
         };
     }, [identifier]);
 

@@ -28,10 +28,10 @@ pub fn run() {
                     .body(data.clone())
                     .unwrap(),
                 None => http::Response::builder()
-                            .status(404)
-                            .header("Access-Control-Allow-Origin", "*")
-                            .body(vec![])
-                            .unwrap(),
+                    .status(404)
+                    .header("Access-Control-Allow-Origin", "*")
+                    .body(vec![])
+                    .unwrap(),
             }
         })
         .plugin(tauri_plugin_dialog::init())
