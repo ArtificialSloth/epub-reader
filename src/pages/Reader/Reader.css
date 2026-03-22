@@ -35,6 +35,14 @@
     height:100%;
 }
 
+.reader-body .reader-error {
+    align-items: center;
+    display: flex;
+    flex: 1;
+    height: 100%;
+    justify-content: center;
+}
+
 .reader-footer {
     align-items: center;
     color: var(--text-muted);

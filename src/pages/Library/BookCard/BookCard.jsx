@@ -17,7 +17,7 @@ function BookCard({ identifier, book, onRemove }) {
     const [popupOpen, setPopupOpen] = useState(false);
     const [cover, setCover] = useState('loading');
     useEffect(() => {
-        invoke('get_cover', { identifier }).then(data => setCover(data)).catch(err => {
+        invoke('get_cover', { identifier }).then(setCover).catch(err => {
             console.error(err);
             setCover('error');
         })
@@ -68,7 +68,7 @@ function BookCard({ identifier, book, onRemove }) {
                     <ContextMenu x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
                         <div className='context-meta' onClick={e => e.stopPropagation()}>
                             <div className='context-meta-label'>Author:</div>
-                            <div className='context-meta-item'>{book.author}</div>
+                            <div className='context-meta-item'>{book.author || '_'}</div>
                             <div className='context-meta-label'>Added:</div>
                             <div className='context-meta-item'>{formatDate(book.added)}</div>
                             <div className='context-meta-label'>Last Read:</div>
@@ -80,11 +80,11 @@ function BookCard({ identifier, book, onRemove }) {
                     </ContextMenu>
                 )}
                 {popupOpen && (
-                    <PopUp onConfirm={e => { e.stopPropagation(); onRemove(identifier) }} onClose={() => setPopupOpen(false)}>
+                    <PopUp onConfirm={e => { e.stopPropagation(); onRemove(identifier); }} onClose={() => setPopupOpen(false)}>
                         <p className='popup-label'>Remove "{book.title}"?</p>
                         <p className='popup-text'>The file will remain, but all saved progress will be lost.</p>
                         <div className='popup-actions'>
-                            <button onClick={e => { e.stopPropagation(); setPopupOpen(false) }}>Cancel</button>
+                            <button onClick={e => { e.stopPropagation(); setPopupOpen(false); }}>Cancel</button>
                             <button className='danger' onClick={() => onRemove(identifier)}>Remove</button>
                         </div>
                     </PopUp>

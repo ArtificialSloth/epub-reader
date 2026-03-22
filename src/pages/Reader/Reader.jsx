@@ -26,12 +26,7 @@ const readerStyles = {
     arrow: {
         ...ReactReaderStyle.arrow,
         color: textMuted,
-        opacity: 0.1,
         padding: '0 32px',
-    },
-    arrowHover: {
-        ...ReactReaderStyle.arrowHover,
-        opacity: 1,
     },
     tocBackground: {
         ...ReactReaderStyle.tocBackground,
@@ -73,20 +68,27 @@ const contentStyles = {
 
 function baseHref(href) { return href.split("#")[0].split("/").pop(); }
 function trimHref(href) { return href.startsWith('../') ? href.slice('../'.length) : href; }
+function flatten(chapters) {
+    return [].concat.apply([], chapters.map((chapter) => [].concat.apply([chapter], flatten(chapter.subitems))));
+}
 
 function Reader({ identifier, book }) {
     const { navigate } = usePage();
 
-    const [epubData, setEpubData] = useState(null);
+    const [epubData, setEpubData] = useState('loading');
     const [location, setLocation] = useState(book.current_location || 0);
     const [chapter, setChapter] = useState('');
     const [page, setPage] = useState('');
     const renditionRef = useRef(null);
     const tocRef = useRef(null);
-    const indexedTocRef = useRef([]);
+    const indexedTocRef = useRef(null);
+    const contentCfiMap = useRef([]);
 
     useEffect(() => {
-        fetch(convertFileSrc('book.epup', 'epub')).then(res => res.arrayBuffer()).then(setEpubData).catch(err => console.error(err));
+        fetch(convertFileSrc('book.epub', 'epub')).then(res => res.arrayBuffer()).then(setEpubData).catch(err => {
+            console.error(err);
+            setEpubData(String(err));
+        });
     }, []);
 
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -102,11 +104,12 @@ function Reader({ identifier, book }) {
     }
 
     function tryIndexToc() {
-        if (!renditionRef.current || !tocRef.current) return;
+        const rendition = renditionRef.current; const toc = tocRef.current;
+        if (!rendition || !toc) return;
 
         const indexedToc = [];
-        for (const entry of tocRef.current) {
-            const spineItem = renditionRef.current.book.spine.spineItems.find(s => baseHref(s.href) === baseHref(entry.href));
+        for (const entry of toc) {
+            const spineItem = rendition.book.spine.spineItems.find(s => baseHref(s.href) === baseHref(entry.href));
             if (!spineItem) continue;
 
             indexedToc.push({ ...entry, index: spineItem.index });
@@ -118,15 +121,17 @@ function Reader({ identifier, book }) {
         loc = trimHref(loc);
         setLocation(loc);
 
+        const rendition = renditionRef.current;
         const indexedToc = indexedTocRef.current;
-        if (renditionRef.current && tocRef.current && indexedToc) {
-            const { displayed, href, index } = renditionRef.current.location.start;
+        if (rendition && indexedToc) {
+            const { displayed, href, cfi, index } = rendition.location.start;
             setPage(`${Math.round(displayed.page / 2)} / ${Math.round(displayed.total / 2)}`);
 
-            const tocEntry = tocRef.current.find(entry => entry.href === href) ??
-                indexedToc.find(entry => baseHref(entry.href) === baseHref(href)) ??
-                indexedToc.findLast(entry => entry.index <= index);
-            setChapter(tocEntry ? tocEntry.label : '');
+            const label = contentCfiMap.current.findLast((e) => rendition.epubcfi.compare(e.cfi, cfi) <= 0)?.label ??
+                indexedToc.find(entry => entry.href === href)?.label ?? // this seemingly never works
+                indexedToc.find(entry => baseHref(entry.href) === baseHref(href))?.label ??
+                indexedToc.findLast(entry => entry.index <= index)?.label;
+            setChapter(label ?? '');
         }
 
         if (loc.startsWith('epubcfi')) {
@@ -142,6 +147,49 @@ function Reader({ identifier, book }) {
             const doc = contents.document;
             doc.querySelectorAll('link[rel="stylesheet"], style:not(#epubjs-inserted-css-, #epubjs-inserted-css-styles)')
                 .forEach(el => el.remove());
+
+            if (!tocRef.current) return;
+            const sectionFile = baseHref(rendition.book.spine.get(contents.sectionIndex).href);
+            const entries = flatten(tocRef.current).filter(entry => baseHref(entry.href) === sectionFile);
+            const cfiMap = entries.flatMap(entry => {
+                const id = entry.href.split('#')[1];
+                const el = id && contents.document.getElementById(id);
+                return el ? { label: entry.label, cfi: contents.cfiFromNode(el) } : [];
+            }, []);
+            contentCfiMap.current = [
+                ...contentCfiMap.current.filter(e => e.section !== sectionFile),
+                ...cfiMap.map(e => ({ ...e, section: sectionFile })),
+            ];
+        });
+
+        let inititialRelocate = true;
+        const contentEl = document.querySelector('.reader-body div div:first-child div:nth-child(3)');
+        if (contentEl) {
+            rendition.on('started', () => contentEl.style.opacity = 0);
+            rendition.on('rendered', () => contentEl.style.opacity = 0);
+            rendition.on('displayError', () => contentEl.style.opacity = 1);
+
+            const prev = rendition.prev.bind(rendition);
+            const next = rendition.next.bind(rendition);
+            rendition.prev = () => {
+                if (!rendition.location?.atStart) contentEl.style.opacity = 0;
+                prev();
+            }
+            rendition.next = () => {
+                if (!rendition.location?.atEnd) contentEl.style.opacity = 0;
+                next();
+            }
+        }
+        rendition.on('relocated', async () => {
+            if (!inititialRelocate) {
+                if (contentEl) contentEl.style.opacity = 1;
+                const loc = rendition.location.start.cfi;
+                if (loc) onLocationChanged(loc);
+            } else if (book.current_location) {
+                inititialRelocate = false;
+                await rendition.display(book.current_location);
+                await rendition.display(book.current_location);
+            }
         });
 
         renditionRef.current = rendition;
@@ -177,24 +225,31 @@ function Reader({ identifier, book }) {
                 )}
             />
             <div className='reader-body'>
-                {epubData ? (
-                    <ReactReader
-                        url={epubData}
-                        location={location}
-                        locationChanged={onLocationChanged}
-                        tocChanged={toc => { tocRef.current = toc; tryIndexToc(); }}
-                        epubOptions={{
-                            allowScriptedContent: true,
-                        }}
-                        getRendition={getRendition}
-                        readerStyles={readerStyles}
-                    />
-                ) : <div className='loader-wrapper'><div className='loader'></div></div>}
+                {(() => {
+                    if (epubData === 'loading') return <div className='loader-wrapper'><div className='loader'></div></div>;
+                    else if (typeof epubData === 'string') return <div className='reader-error'><div className='error-text'>{epubData}</div></div>;
+                    else return (
+                        <ReactReader
+                            url={epubData}
+                            location={location}
+                            locationChanged={onLocationChanged}
+                            tocChanged={toc => { tocRef.current = toc; tryIndexToc(); }}
+                            epubOptions={{
+                                allowScriptedContent: true,
+                            }}
+                            getRendition={getRendition}
+                            readerStyles={readerStyles}
+                        />
+                    );
+                })()}
             </div>
-            <div className='reader-footer'>
-                <p>{page}</p>
-                <p>{chapter}</p>
-            </div>
+            {page && (
+                <div className='reader-footer'>
+                    <p>{page}</p>
+                    <p>{chapter}</p>
+                </div>
+            )}
+
         </div >
     );
 }

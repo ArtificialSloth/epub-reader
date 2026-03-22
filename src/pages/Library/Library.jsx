@@ -9,13 +9,12 @@ import BookCard from './BookCard/BookCard'
 function Library() {
     const [sort, setSort] = useState(localStorage.getItem('sort') ?? 'recently-added');
     const [library, setLibrary] = useState('loading');
+
     async function fetchLibrary() {
-        try {
-            setLibrary(await invoke('get_library'));
-        } catch (err) {
+        await invoke('get_library').then(setLibrary).catch(err => {
             console.error(err);
             setLibrary(String(err));
-        }
+        });
     }
     useEffect(() => { fetchLibrary(); }, []);
 
