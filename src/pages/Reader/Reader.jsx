@@ -190,7 +190,7 @@ function Reader({ identifier, book }) {
                 if (book.current_location) {
                     await rendition.display(book.current_location);
                     await rendition.display(book.current_location);
-                }
+                } else if (contentEl) contentEl.style.opacity = 1;
             }
         });
 
