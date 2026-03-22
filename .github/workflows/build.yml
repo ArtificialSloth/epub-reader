@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [main, reactjs-front-end]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
