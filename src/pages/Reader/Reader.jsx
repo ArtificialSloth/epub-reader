@@ -172,23 +172,25 @@ function Reader({ identifier, book }) {
             const prev = rendition.prev.bind(rendition);
             const next = rendition.next.bind(rendition);
             rendition.prev = () => {
-                if (!rendition.location?.atStart) contentEl.style.opacity = 0;
+                if (rendition.location && !rendition.location.atStart) contentEl.style.opacity = 0;
                 prev();
             }
             rendition.next = () => {
-                if (!rendition.location?.atEnd) contentEl.style.opacity = 0;
+                if (rendition.location && !rendition.location.atEnd) contentEl.style.opacity = 0;
                 next();
             }
         }
-        rendition.on('relocated', async () => {
+        rendition.on('relocated', async (args) => {
             if (!inititialRelocate) {
                 if (contentEl) contentEl.style.opacity = 1;
                 const loc = rendition.location.start.cfi;
                 if (loc) onLocationChanged(loc);
-            } else if (book.current_location) {
+            } else {
                 inititialRelocate = false;
-                await rendition.display(book.current_location);
-                await rendition.display(book.current_location);
+                if (book.current_location) {
+                    await rendition.display(book.current_location);
+                    await rendition.display(book.current_location);
+                }
             }
         });
 
@@ -234,9 +236,6 @@ function Reader({ identifier, book }) {
                             location={location}
                             locationChanged={onLocationChanged}
                             tocChanged={toc => { tocRef.current = toc; tryIndexToc(); }}
-                            epubOptions={{
-                                allowScriptedContent: true,
-                            }}
                             getRendition={getRendition}
                             readerStyles={readerStyles}
                         />
