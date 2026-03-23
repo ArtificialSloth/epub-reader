@@ -7,7 +7,8 @@
     width: 280px;
 }
 
-.book-card:hover {
+.book-card:hover,
+.book-card.context {
     transform: translateY(-5px);
 }
 

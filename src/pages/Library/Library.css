@@ -5,6 +5,15 @@
     padding: 0 32px 24px 32px;
 }
 
+.library-header {
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    margin: 24px 0 28px 0;
+    padding-bottom: 16px;
+}
+
 .library-controls {
     align-items: center;
     display: flex;

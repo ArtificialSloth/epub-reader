@@ -4,7 +4,8 @@ import { ReactReader, ReactReaderStyle } from 'react-reader'
 import { invoke, convertFileSrc } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { usePage } from '@/PageContext'
-import Header from '@/components/Header/Header'
+import ContextMenu from '@/components/ContextMenu/ContextMenu'
+import Select from '@/components/Select/Select'
 
 const bgPrimary = getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim();
 const textPrimary = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
@@ -61,7 +62,7 @@ const readerStyles = {
 };
 
 const contentStyles = {
-    body: { background: `${bgPrimary}`, color: `${textPrimary}`, 'font-size': '18px' },
+    body: { background: `${bgPrimary}`, color: `${textPrimary}` },
     h1: { 'text-align': 'center !important' },
     a: { color: `${textLink}` },
 };
@@ -76,13 +77,18 @@ function Reader({ identifier, book }) {
     const { navigate } = usePage();
 
     const [epubData, setEpubData] = useState('loading');
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const [location, setLocation] = useState(book.current_location || 0);
     const [chapter, setChapter] = useState('');
     const [page, setPage] = useState('');
+    const [menuPos, setMenuPos] = useState(null);
+    const [fontSize, setFontSize] = useState(Number(localStorage.getItem('fontSize')) || 18);
+    const [font, setFont] = useState(localStorage.getItem('font') || 'initial');
     const renditionRef = useRef(null);
     const tocRef = useRef(null);
     const indexedTocRef = useRef(null);
     const contentCfiMap = useRef([]);
+    const resizeRef = useRef(false);
 
     useEffect(() => {
         fetch(convertFileSrc('book.epub', 'epub')).then(res => res.arrayBuffer()).then(setEpubData).catch(err => {
@@ -91,7 +97,6 @@ function Reader({ identifier, book }) {
         });
     }, []);
 
-    const [isFullscreen, setIsFullscreen] = useState(false);
     useEffect(() => {
         const win = getCurrentWindow();
         win.setTitle(book.title);
@@ -124,7 +129,7 @@ function Reader({ identifier, book }) {
         const rendition = renditionRef.current;
         const indexedToc = indexedTocRef.current;
         if (rendition && indexedToc) {
-            const { displayed, href, cfi, index } = rendition.location.start;
+            const { displayed, cfi, href, index } = rendition.location.start;
             setPage(`${Math.round(displayed.page / 2)} / ${Math.round(displayed.total / 2)}`);
 
             const label = contentCfiMap.current.findLast((e) => rendition.epubcfi.compare(e.cfi, cfi) <= 0)?.label ??
@@ -142,18 +147,22 @@ function Reader({ identifier, book }) {
     function getRendition(rendition) {
         rendition.themes.register('styles', contentStyles);
         rendition.themes.select('styles');
+        rendition.themes.fontSize(`${fontSize}px`);
+        rendition.themes.font(font);
 
         rendition.hooks.content.register((contents) => {
             const doc = contents.document;
-            doc.querySelectorAll('link[rel="stylesheet"], style:not(#epubjs-inserted-css-, #epubjs-inserted-css-styles)')
-                .forEach(el => el.remove());
+            if (localStorage.getItem('useEpubStyles') !== 'true') {
+                doc.querySelectorAll('link[rel="stylesheet"], style:not(#epubjs-inserted-css-, #epubjs-inserted-css-styles)')
+                    .forEach(el => el.remove());
+            }
 
             if (!tocRef.current) return;
             const sectionFile = baseHref(rendition.book.spine.get(contents.sectionIndex).href);
             const entries = flatten(tocRef.current).filter(entry => baseHref(entry.href) === sectionFile);
             const cfiMap = entries.flatMap(entry => {
                 const id = entry.href.split('#')[1];
-                const el = id && contents.document.getElementById(id);
+                const el = id && doc.getElementById(id);
                 return el ? { label: entry.label, cfi: contents.cfiFromNode(el) } : [];
             }, []);
             contentCfiMap.current = [
@@ -166,8 +175,8 @@ function Reader({ identifier, book }) {
         const contentEl = document.querySelector('.reader-body div div:first-child div:nth-child(3)');
         if (contentEl) {
             rendition.on('started', () => contentEl.style.opacity = 0);
-            rendition.on('rendered', () => contentEl.style.opacity = 0);
             rendition.on('displayError', () => contentEl.style.opacity = 1);
+            rendition.on('rendered', () => { if (!resizeRef.current) contentEl.style.opacity = 0; });
 
             const prev = rendition.prev.bind(rendition);
             const next = rendition.next.bind(rendition);
@@ -180,6 +189,7 @@ function Reader({ identifier, book }) {
                 next();
             }
         }
+
         rendition.on('relocated', async (args) => {
             if (!inititialRelocate) {
                 if (contentEl) contentEl.style.opacity = 1;
@@ -194,9 +204,23 @@ function Reader({ identifier, book }) {
             }
         });
 
+        let timeout;
+        rendition.on('resized', () => {
+            if (!resizeRef.current) resizeRef.current = true;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => resizeRef.current = false, 200);
+        });
+
         renditionRef.current = rendition;
         tryIndexToc();
-    };
+    }
+
+    useEffect(() => {
+        function onBlur(e) { if (menuPos && document.activeElement?.tagName === 'IFRAME') setMenuPos(null); }
+        if (menuPos) window.addEventListener('blur', onBlur);
+        else window.removeEventListener('blur', onBlur);
+        return () => window.removeEventListener('blur', onBlur);
+    }, [menuPos]);
 
     async function onClickBackBtn(e) {
         await invoke('save_progress', { identifier, location });
@@ -204,28 +228,63 @@ function Reader({ identifier, book }) {
         navigate('library');
     }
 
+    function onClickSettingsBtn(e) {
+        e.stopPropagation();
+        if (menuPos) return setMenuPos(null);
+        const rect = e.currentTarget.getBoundingClientRect();
+        setMenuPos({ x: rect.left, y: rect.bottom + 4 });
+    }
+
+    useEffect(() => {
+        if (!fontSize) return;
+        localStorage.setItem('fontSize', fontSize);
+        if (renditionRef.current) renditionRef.current.themes.fontSize(`${fontSize}px`);
+    }, [fontSize]);
+
+    useEffect(() => {
+        if (!font) return;
+        localStorage.setItem('font', font);
+        if (renditionRef.current) renditionRef.current.themes.font(font);
+    }, [font]);
+
+    const settingsBtnRef = useRef(null);
     return (
         <div className='reader'>
-            <Header
-                left={(
-                    <button className='reader-back-btn' onClick={onClickBackBtn} >
+            {!isFullscreen ? (
+                <div className='reader-header'>
+                    <button className='reader-back-btn' onClick={onClickBackBtn}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
                     </button>
-                )}
-                right={(
                     <div className='reader-controls'>
-                        {!isFullscreen ? (
-                            <button className='reader-fullscreen-btn' onClick={() => setFullscreen(true)}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-                            </button>
-                        ) : (
-                            <button className='reader-minimize-btn' onClick={() => setFullscreen(false)}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
-                            </button>
+                        <button ref={settingsBtnRef} className='reader-settings-btn' title='Settings' onClick={onClickSettingsBtn}>Aa</button>
+                        {menuPos && (
+                            <ContextMenu parentRef={settingsBtnRef} x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
+                                <div className='settings-item'>
+                                    <p>Font Size</p>
+                                    <p><input type='number' value={fontSize} onChange={e => setFontSize(e.target.value)} />px</p>
+                                </div>
+                                <div className='settings-item'>
+                                    <p>Font</p>
+                                    <Select value={font} onChange={e => setFont(e.target.value)}>
+                                        <option value='initial'>Default</option>
+                                        <option value='Times New Roman'>Times new Roman</option>
+                                        <option value='sans-serif'>Sans-serif</option>
+                                        <option value='monospace'>Monospace</option>
+                                    </Select>
+                                </div>
+                            </ContextMenu>
                         )}
+                        <div className='control-separator'></div>
+                        <button className='reader-fullscreen-btn' title='Fullscreen' onClick={() => setFullscreen(true)}>
+                            <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'></path></svg>
+                        </button>
                     </div>
-                )}
-            />
+                </div>
+            ) : (
+                <button className='reader-minimize-btn' title='Minimize' onClick={() => setFullscreen(false)}>
+                    <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3'></path></svg>
+                </button>
+            )}
             <div className='reader-body'>
                 {(() => {
                     if (epubData === 'loading') return <div className='loader-wrapper'><div className='loader'></div></div>;
@@ -238,6 +297,10 @@ function Reader({ identifier, book }) {
                             tocChanged={toc => { tocRef.current = toc; tryIndexToc(); }}
                             getRendition={getRendition}
                             readerStyles={readerStyles}
+                            epubOptions={{
+                                allowPopups: localStorage.getItem('allowPopups') === 'true',
+                                allowScriptedContent: localStorage.getItem('allowScripts') === 'true',
+                            }}
                         />
                     );
                 })()}

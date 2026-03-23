@@ -2,7 +2,6 @@ import './Library.css'
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog'
-import Header from '@/components/Header/Header'
 import Select from '@/components/Select/Select'
 import BookCard from './BookCard/BookCard'
 
@@ -53,7 +52,8 @@ function Library() {
 
     return (
         <div className='library'>
-            <Header left={<h1>My Library</h1>} right={(
+            <div className='library-header'>
+                <h1>My Library</h1>
                 <div className='library-controls'>
                     <Select value={sort} onChange={onChange}>
                         <option value='recently-added'>Recently Added</option>
@@ -63,7 +63,7 @@ function Library() {
                     </Select>
                     <button onClick={addBook}>+ Add Book</button>
                 </div>
-            )} />
+            </div>
             {(() => {
                 if (library === 'loading') return (<div className='loader-wrapper'><div className='loader'></div></div>);
                 else if (typeof library === 'string') return (

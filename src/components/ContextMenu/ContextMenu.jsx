@@ -2,7 +2,7 @@ import './ContextMenu.css'
 import { createPortal } from 'react-dom'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 
-function ContextMenu({ x, y, onClose, children }) {
+function ContextMenu({ parentRef, x, y, onClose, children }) {
     const ref = useRef(null);
 
     useLayoutEffect(() => {
@@ -17,7 +17,9 @@ function ContextMenu({ x, y, onClose, children }) {
     }, [x, y]);
 
     useEffect(() => {
-        function handleOutside() { onClose(); }
+        function handleOutside(e) {
+            if (!parentRef.current.contains(e.target)) onClose();
+        }
         function handleEsc(e) { if (e.key === 'Escape') onClose(); }
         document.addEventListener('mousedown', handleOutside);
         document.addEventListener('keydown', handleEsc);

@@ -5,14 +5,21 @@
     overflow: hidden;
 }
 
-.reader .header {
-    margin-left: 32px;
-    margin-right: 32px;
-    padding-bottom: 8px;
+.reader:has(.reader-minimize-btn) {
     padding-top: 16px;
 }
 
-.reader .header button {
+.reader-header {
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    margin: 16px 32px 28px 32px;
+    padding-bottom: 8px;
+}
+
+.reader-minimize-btn,
+.reader-header button {
     align-items: center;
     background: transparent;
     border: none;
@@ -22,13 +29,45 @@
     transition: background-color 0.15s, color 0.15s;
 }
 
-.reader .header button:hover {
+.reader-minimize-btn:hover,
+.reader-header button:hover {
     background-color: var(--bg-elevated);
     color: var(--text-muted);
 }
 
-.reader-fullscreen-btn:not(:first-child) {
+.reader-minimize-btn {
+    position: absolute;
+    right: 32px;
+    z-index: 2;
+}
+
+.reader-controls {
+    display: flex;
+}
+
+.control-separator {
     border-left: 1px solid var(--border-color);
+    margin: 8px;
+}
+
+.settings-item {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 8px;
+}
+
+.settings-item input[type='number'] {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 0;
+    border-right: 0;
+    color: var(--text-secondary);
+    field-sizing: content;
+    padding: 4px 0 4px 4px;
+    text-align: right;
+    width: 6ch;
 }
 
 .reader-body {

@@ -1,5 +1,5 @@
 import './BookCard.css'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { usePage } from '@/PageContext'
 import ContextMenu from '@/components/ContextMenu/ContextMenu';
@@ -37,6 +37,7 @@ function BookCard({ identifier, book, onRemove }) {
 
     function onClickContextBtn(e) {
         e.stopPropagation();
+        if (menuPos) return setMenuPos(null);
         const rect = e.currentTarget.getBoundingClientRect();
         setMenuPos({ x: rect.left, y: rect.bottom + 4 });
     }
@@ -46,8 +47,9 @@ function BookCard({ identifier, book, onRemove }) {
         setMenuPos({ x: e.clientX, y: e.clientY });
     }
 
+    const contextBtnRef = useRef(null);
     return (
-        <div className='book-card' onClick={onClick} onContextMenu={onContextMenu}>
+        <div className={`book-card ${menuPos && 'context'}`} onClick={onClick} onContextMenu={onContextMenu}>
             <div className='book-cover'>
                 {(() => {
                     if (cover === 'error') return (
@@ -63,9 +65,9 @@ function BookCard({ identifier, book, onRemove }) {
             </div>
             <div className='book-footer'>
                 <div className='book-title'>{book.title}</div>
-                <button className='book-context-btn' onClick={onClickContextBtn}>⋮</button>
+                <button ref={contextBtnRef} className='book-context-btn' onClick={onClickContextBtn}>⋮</button>
                 {menuPos && (
-                    <ContextMenu x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
+                    <ContextMenu parentRef={contextBtnRef} x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
                         <div className='context-meta' onClick={e => e.stopPropagation()}>
                             <div className='context-meta-label'>Author:</div>
                             <div className='context-meta-item'>{book.author || '_'}</div>
