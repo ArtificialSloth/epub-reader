@@ -47,6 +47,14 @@ pub fn run() {
             book::close_book,
             book::save_progress,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building application")
+        .run(|app_handle, event| match event {
+            tauri::RunEvent::Exit {} => {
+                let state = app_handle.state::<AppState>();
+                let mut library_state = state.library_state.lock().unwrap();
+                library::save(&mut library_state).expect("error while saving library");
+            }
+            _ => {}
+        });
 }

@@ -17,7 +17,7 @@ fn prune_sources(library: &mut Library, identifier: &str, missing: &[String]) ->
 }
 
 fn load_epub_doc(library_state: &mut LibraryState, identifier: &str) -> Result<(String, EpubDoc<BufReader<File>>), String> {
-    let sources = library_state.library.get(identifier).ok_or_else(|| format!("No entry for {}", identifier))?.sources.clone();
+    let sources = library_state.library.get(identifier).ok_or_else(|| format!("no entry for {}", identifier))?.sources.clone();
 
     let mut resolved = Default::default();
     let mut missing = vec![];
@@ -31,7 +31,7 @@ fn load_epub_doc(library_state: &mut LibraryState, identifier: &str) -> Result<(
     if prune_sources(&mut library_state.library, identifier, &missing)? {
         library::save(library_state)?;
     }
-    Ok((resolved, doc.ok_or_else(|| format!("No valid sources for {}", identifier))?))
+    Ok((resolved, doc.ok_or_else(|| format!("no valid sources for {}", identifier))?))
 }
 
 #[tauri::command]
@@ -51,7 +51,7 @@ pub fn open_book(state: State<'_, AppState>, identifier: String) -> Result<Book,
     let mut current_book = state.current_book.lock().unwrap();
     *current_book = Some(std::fs::read(path).map_err(|e| e.to_string())?);
 
-    let book = library_state.library.get_mut(&identifier).ok_or_else(|| format!("No entry for {}", identifier))?;
+    let book = library_state.library.get_mut(&identifier).ok_or_else(|| format!("no entry for {}", identifier))?;
     book.opened = SystemTime::duration_since(&SystemTime::now(), SystemTime::UNIX_EPOCH).map_err(|e| e.to_string())?.as_secs();
     let book = book.clone();
 
@@ -72,7 +72,7 @@ pub fn close_book(state: State<'_, AppState>) -> Result<(), String> {
 #[tauri::command]
 pub fn save_progress(state: State<'_, AppState>, identifier: String, location: String) -> Result<Book, String> {
     let mut library_state = state.library_state.lock().unwrap();
-    let book = library_state.library.get_mut(&identifier).ok_or_else(|| format!("No entry for {}", identifier))?;
+    let book = library_state.library.get_mut(&identifier).ok_or_else(|| format!("no entry for {}", identifier))?;
 
     book.current_location = location;
     let book = book.clone();
