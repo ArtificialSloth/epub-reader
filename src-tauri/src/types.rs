@@ -9,7 +9,6 @@ pub struct Book {
     pub sources: Vec<String>,
     pub added: u64,
     pub opened: u64,
-    pub num_chapters: usize,
     pub current_location: String,
 }
 

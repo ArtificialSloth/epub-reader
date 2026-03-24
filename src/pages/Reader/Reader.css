@@ -58,8 +58,8 @@
     padding: 8px;
 }
 
-.settings-item input[type='number'] {
-    background-color: var(--bg-elevated);
+.settings-item input {
+    background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: 0;
     border-right: 0;

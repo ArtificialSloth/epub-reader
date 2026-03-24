@@ -16,6 +16,10 @@ function BookCard({ identifier, book, onRemove }) {
     const [menuPos, setMenuPos] = useState(null);
     const [popupOpen, setPopupOpen] = useState(false);
     const [cover, setCover] = useState('loading');
+    const [useEpubStyles, setUseEpubStyles] = useState(localStorage.getItem(`${identifier}:useEpubStyles`) === 'true');
+    const [allowPopups, setAllowPopups] = useState(localStorage.getItem(`${identifier}:allowPopups`) === 'true');
+    const [allowScripts, setAllowScripts] = useState(localStorage.getItem(`${identifier}:allowScripts`) === 'true');
+
     useEffect(() => {
         invoke('get_cover', { identifier }).then(setCover).catch(err => {
             console.error(err);
@@ -26,17 +30,15 @@ function BookCard({ identifier, book, onRemove }) {
     async function onClick() {
         await invoke('open_book', { identifier })
             .then(result => navigate('reader', { identifier, book: result }))
-            .catch(err => console.log(err));
+            .catch(err => console.error(err));
     }
 
     function onClickRemoveBtn(e) {
-        e.stopPropagation();
         setMenuPos(null);
         setPopupOpen(true);
     }
 
     function onClickContextBtn(e) {
-        e.stopPropagation();
         if (menuPos) return setMenuPos(null);
         const rect = e.currentTarget.getBoundingClientRect();
         setMenuPos({ x: rect.left, y: rect.bottom + 4 });
@@ -46,6 +48,21 @@ function BookCard({ identifier, book, onRemove }) {
         e.preventDefault();
         setMenuPos({ x: e.clientX, y: e.clientY });
     }
+
+    useEffect(() => {
+        if (useEpubStyles) localStorage.setItem(`${identifier}:useEpubStyles`, useEpubStyles);
+        else localStorage.removeItem(`${identifier}:useEpubStyles`);
+    }, [useEpubStyles]);
+
+    useEffect(() => {
+        if (allowPopups) localStorage.setItem(`${identifier}:allowPopups`, allowPopups);
+        else localStorage.removeItem(`${identifier}:allowPopups`);
+    }, [allowPopups]);
+
+    useEffect(() => {
+        if (allowScripts) localStorage.setItem(`${identifier}:allowScripts`, allowScripts);
+        else localStorage.removeItem(`${identifier}:allowScripts`);
+    }, [allowScripts]);
 
     const contextBtnRef = useRef(null);
     return (
@@ -68,25 +85,37 @@ function BookCard({ identifier, book, onRemove }) {
                 <button ref={contextBtnRef} className='book-context-btn' onClick={onClickContextBtn}>⋮</button>
                 {menuPos && (
                     <ContextMenu parentRef={contextBtnRef} x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
-                        <div className='context-meta' onClick={e => e.stopPropagation()}>
+                        <div className='context-meta'>
                             <div className='context-meta-label'>Author:</div>
                             <div className='context-meta-item'>{book.author || '_'}</div>
                             <div className='context-meta-label'>Added:</div>
                             <div className='context-meta-item'>{formatDate(book.added)}</div>
                             <div className='context-meta-label'>Last Read:</div>
                             <div className='context-meta-item'>{formatDate(book.opened)}</div>
-                            <div className='context-meta-label'>Chapter:</div>
-                            <div className='context-meta-item'>{book.current_chapter}/{book.num_chapters}</div>
+                        </div>
+                        <div className='book-settings'>
+                            <div className='settings-item'>
+                                <p>Use ePub Styles</p>
+                                <input type='checkbox' checked={useEpubStyles} onChange={e => setUseEpubStyles(e.target.checked)} />
+                            </div>
+                            <div className='settings-item'>
+                                <p>Allow Popups</p>
+                                <input type='checkbox' checked={allowPopups} onChange={e => setAllowPopups(e.target.checked)} />
+                            </div>
+                            <div className='settings-item danger'>
+                                <p>Allow Scripts</p>
+                                <input type='checkbox' checked={allowScripts} onChange={e => setAllowScripts(e.target.checked)} />
+                            </div>
                         </div>
                         <button className='danger' onClick={onClickRemoveBtn}>Remove From Library</button>
                     </ContextMenu>
                 )}
                 {popupOpen && (
-                    <PopUp onConfirm={e => { e.stopPropagation(); onRemove(identifier); }} onClose={() => setPopupOpen(false)}>
+                    <PopUp onConfirm={e => onRemove(identifier)} onClose={() => setPopupOpen(false)}>
                         <p className='popup-label'>Remove "{book.title}"?</p>
                         <p className='popup-text'>The file will remain, but all saved progress will be lost.</p>
                         <div className='popup-actions'>
-                            <button onClick={e => { e.stopPropagation(); setPopupOpen(false); }}>Cancel</button>
+                            <button onClick={e => setPopupOpen(false)}>Cancel</button>
                             <button className='danger' onClick={() => onRemove(identifier)}>Remove</button>
                         </div>
                     </PopUp>

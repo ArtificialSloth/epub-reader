@@ -30,7 +30,7 @@ function ContextMenu({ parentRef, x, y, onClose, children }) {
     }, [onClose]);
 
     return createPortal(
-        <div ref={ref} className='context-menu' style={{ left: x, top: y }} onMouseDown={e => e.stopPropagation()}>
+        <div ref={ref} className='context-menu' style={{ left: x, top: y }} onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation(e)}>
             {children}
         </div>,
         document.body

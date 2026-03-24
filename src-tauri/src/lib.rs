@@ -14,6 +14,7 @@ pub fn run() {
     };
     
     tauri::Builder::default()
+        .plugin(tauri_plugin_cli::init())
         .manage(AppState {
             library_state: Mutex::new(library_state),
             current_book: Mutex::new(None),

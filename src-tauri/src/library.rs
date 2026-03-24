@@ -40,7 +40,7 @@ pub fn get_library(state: State<'_, AppState>) -> Result<Library, String> {
 }
 
 #[tauri::command]
-pub fn add_book(state: State<'_, AppState>, path: String) -> Result<Book, String> {
+pub fn add_book(state: State<'_, AppState>, path: String) -> Result<String, String> {
     let doc = epub::doc::EpubDoc::new(&path).map_err(|e| e.to_string())?;
     let now = SystemTime::duration_since(&SystemTime::now(), SystemTime::UNIX_EPOCH).map_err(|e| e.to_string())?.as_secs();
 
@@ -54,12 +54,11 @@ pub fn add_book(state: State<'_, AppState>, path: String) -> Result<Book, String
         .unwrap_or_else(|| format!("{}:{}", title, author));
 
     let mut library_state = state.library_state.lock().unwrap();
-    let book = library_state.library.entry(identifier)
+    library_state.library.entry(identifier.clone())
         .and_modify(|b| {
             if !b.sources.contains(&path) {
                 b.sources.push(path.clone());
             }
-            b.num_chapters = doc.get_num_chapters();
         })
         .or_insert(Book {
             title,
@@ -67,13 +66,11 @@ pub fn add_book(state: State<'_, AppState>, path: String) -> Result<Book, String
             sources: vec![path.clone()],
             added: now,
             opened: now,
-            num_chapters: doc.get_num_chapters(),
             ..Default::default()
-        })
-        .clone();
+        });
 
     save(&mut library_state)?;    
-    Ok(book)
+    Ok(identifier)
 }
 
 #[tauri::command]

@@ -2,8 +2,8 @@ import { createContext, useContext, useState } from 'react'
 
 const PageContext = createContext();
 
-export function PageProvider({ children }) {
-    const [page, setPage] = useState({ name: 'library' });
+export function PageProvider({ initPage, children }) {
+    const [page, setPage] = useState(initPage);
 
     function navigate(name, props = {}) {
         setPage({ name, ...props });

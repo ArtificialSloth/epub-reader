@@ -32,5 +32,16 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "cli": {
+      "args": [
+        {
+          "name": "open",
+          "index": 1,
+          "takesValue": true
+        }
+      ]
+    }
   }
 }

@@ -152,7 +152,7 @@ function Reader({ identifier, book }) {
 
         rendition.hooks.content.register((contents) => {
             const doc = contents.document;
-            if (localStorage.getItem('useEpubStyles') !== 'true') {
+            if (localStorage.getItem(`${identifier}:useEpubStyles`) !== 'true') {
                 doc.querySelectorAll('link[rel="stylesheet"], style:not(#epubjs-inserted-css-, #epubjs-inserted-css-styles)')
                     .forEach(el => el.remove());
             }
@@ -298,8 +298,8 @@ function Reader({ identifier, book }) {
                             getRendition={getRendition}
                             readerStyles={readerStyles}
                             epubOptions={{
-                                allowPopups: localStorage.getItem('allowPopups') === 'true',
-                                allowScriptedContent: localStorage.getItem('allowScripts') === 'true',
+                                allowPopups: localStorage.getItem(`${identifier}:allowPopups`) === 'true',
+                                allowScriptedContent: localStorage.getItem(`${identifier}:allowScripts`) === 'true',
                             }}
                         />
                     );

@@ -27,9 +27,8 @@
     background: var(--panel-hover);
 }
 
-.context-menu button.danger {
+.context-menu .danger {
     color: var(--text-danger);
-    text-align: center;
 }
 
 .context-menu button.danger:hover {
