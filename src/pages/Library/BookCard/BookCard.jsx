@@ -1,9 +1,9 @@
-import './BookCard.css'
-import { useState, useEffect, useRef } from 'react'
-import { invoke } from '@tauri-apps/api/core'
-import { usePage } from '@/PageContext'
-import ContextMenu from '@/components/ContextMenu/ContextMenu';
-import PopUp from '@/components/PopUp/PopUp';
+import './BookCard.css';
+import { useState, useEffect, useRef } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { usePage } from '@/PageContext';
+import ContextMenu from '@/components/ContextMenu';
+import PopUp from '@/components/Popup';
 
 function formatDate(timestamp) {
     if (!timestamp) return '—';
@@ -24,7 +24,7 @@ function BookCard({ identifier, book, onRemove }) {
         invoke('get_cover', { identifier }).then(setCover).catch(err => {
             console.error(err);
             setCover('error');
-        })
+        });
     }, [identifier]);
 
     async function onClick() {
@@ -125,4 +125,4 @@ function BookCard({ identifier, book, onRemove }) {
     );
 }
 
-export default BookCard
+export default BookCard;

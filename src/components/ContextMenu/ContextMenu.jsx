@@ -1,6 +1,6 @@
-import './ContextMenu.css'
-import { createPortal } from 'react-dom'
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import './ContextMenu.css';
+import { createPortal } from 'react-dom';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 
 function ContextMenu({ parentRef, x, y, onClose, children }) {
     const ref = useRef(null);
@@ -37,4 +37,4 @@ function ContextMenu({ parentRef, x, y, onClose, children }) {
     );
 }
 
-export default ContextMenu
+export default ContextMenu;

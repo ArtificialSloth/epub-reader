@@ -1,8 +1,8 @@
-import './PopUp.css'
-import { createPortal } from 'react-dom'
-import { useEffect } from 'react'
+import './Popup.css';
+import { createPortal } from 'react-dom';
+import { useEffect } from 'react';
 
-function PopUp({ onConfirm, onClose, children }) {
+function Popup({ onConfirm, onClose, children }) {
     useEffect(() => {
         function onKeyDown(e) {
             if (e.key === 'Escape') onClose();
@@ -22,4 +22,4 @@ function PopUp({ onConfirm, onClose, children }) {
     );
 }
 
-export default PopUp
+export default Popup;

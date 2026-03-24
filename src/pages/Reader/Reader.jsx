@@ -1,11 +1,11 @@
-import './Reader.css'
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { ReactReader, ReactReaderStyle } from 'react-reader'
-import { invoke, convertFileSrc } from '@tauri-apps/api/core'
-import { getCurrentWindow } from '@tauri-apps/api/window'
-import { usePage } from '@/PageContext'
-import ContextMenu from '@/components/ContextMenu/ContextMenu'
-import Select from '@/components/Select/Select'
+import './Reader.css';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { ReactReader, ReactReaderStyle } from 'react-reader';
+import { invoke, convertFileSrc } from '@tauri-apps/api/core';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { usePage } from '@/PageContext';
+import ContextMenu from '@/components/ContextMenu';
+import Select from '@/components/Select';
 
 const bgPrimary = getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim();
 const textPrimary = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
@@ -183,11 +183,11 @@ function Reader({ identifier, book }) {
             rendition.prev = () => {
                 if (rendition.location && !rendition.location.atStart) contentEl.style.opacity = 0;
                 prev();
-            }
+            };
             rendition.next = () => {
                 if (rendition.location && !rendition.location.atEnd) contentEl.style.opacity = 0;
                 next();
-            }
+            };
         }
 
         rendition.on('relocated', async (args) => {
@@ -316,4 +316,4 @@ function Reader({ identifier, book }) {
     );
 }
 
-export default Reader
+export default Reader;

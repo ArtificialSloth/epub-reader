@@ -1,9 +1,9 @@
-import './Library.css'
-import { useState, useEffect } from 'react'
-import { invoke } from '@tauri-apps/api/core'
-import { open } from '@tauri-apps/plugin-dialog'
-import Select from '@/components/Select/Select'
-import BookCard from './BookCard/BookCard'
+import './Library.css';
+import { useState, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
+import Select from '@/components/Select';
+import BookCard from './BookCard';
 
 function Library() {
     const [sort, setSort] = useState(localStorage.getItem('sort') ?? 'recently-added');
@@ -85,4 +85,4 @@ function Library() {
     );
 }
 
-export default Library
+export default Library;

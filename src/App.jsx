@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
-import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window'
-import { getMatches } from '@tauri-apps/plugin-cli'
-import { PageProvider, usePage } from './PageContext'
-import Library from './pages/Library/Library'
-import Reader from './pages/Reader/Reader'
-import { invoke } from '@tauri-apps/api/core'
+import { useState, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { getMatches } from '@tauri-apps/plugin-cli';
+import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
+import { PageProvider, usePage } from './PageContext';
+import Library from './pages/Library';
+import Reader from './pages/Reader';
 
 function Routes() {
     const { page } = usePage();
@@ -47,4 +47,4 @@ function App() {
     );
 }
 
-export default App
+export default App;
