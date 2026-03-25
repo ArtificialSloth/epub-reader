@@ -1,5 +1,5 @@
 import './Reader.css';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { invoke, convertFileSrc } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { usePage } from '@/PageContext';
@@ -62,20 +62,9 @@ function Reader({ identifier, book }) {
     }, [font]);
 
     useEffect(() => {
-        const renderer = viewRef.current?.renderer;
-        if (useEpubStyles) {
-            localStorage.setItem(`${identifier}:useEpubStyles`, useEpubStyles);
-            if (renderer) {
-                const { doc } = viewRef.current.renderer.getContents()[0];
-                doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => el.removeAttribute('disabled'));
-            }
-        } else {
-            localStorage.removeItem(`${identifier}:useEpubStyles`);
-            if (renderer) {
-                const { doc } = viewRef.current.renderer.getContents()[0];
-                doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => el.disabled = true);
-            }
-        }
+        if (useEpubStyles) localStorage.setItem(`${identifier}:useEpubStyles`, useEpubStyles);
+        else localStorage.removeItem(`${identifier}:useEpubStyles`);
+        toggleEpubStyles();
     }, [useEpubStyles]);
 
     useEffect(() => {
@@ -98,6 +87,11 @@ function Reader({ identifier, book }) {
             a:link {
                 color: ${textLink};
             }
+
+            h1 {
+                margin-block-end: 1em;
+                text-align: center;
+            }
         `;
 
         view.renderer.setAttribute('max-inline-size', '80%');
@@ -106,16 +100,13 @@ function Reader({ identifier, book }) {
 
     function onLoad(e) {
         if (containerRef.current) containerRef.current.style.opacity = 0;
-
         const view = viewRef.current;
         if (!view) return;
 
         const { doc } = e.detail;
-        if (localStorage.getItem(`${identifier}:useEpubStyles`) !== 'true') {
-            doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => el.disabled = true);
-        }
-
         doc.addEventListener('keydown', onKeydown);
+
+        toggleEpubStyles();
         buildStyles();
     }
 
@@ -154,6 +145,15 @@ function Reader({ identifier, book }) {
     function setFullscreen(fsn) {
         const win = getCurrentWindow();
         win.setFullscreen(fsn).then(() => win.isFullscreen().then(setIsFullscreen)).catch(err => console.error(err));
+    }
+
+    function toggleEpubStyles() {
+        const renderer = viewRef.current?.renderer;
+        if (!renderer) return;
+
+        const { doc } = viewRef.current.renderer.getContents()[0];
+        if (useEpubStyles) doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => el.removeAttribute('disabled'));
+        else doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => el.disabled = true);
     }
 
     async function onClickBackBtn() {
