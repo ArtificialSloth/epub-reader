@@ -1,100 +1,39 @@
 import './Reader.css';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ReactReader, ReactReaderStyle } from 'react-reader';
 import { invoke, convertFileSrc } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { usePage } from '@/PageContext';
+import FoliateReader from '@/components/FoliateReader';
 import ContextMenu from '@/components/ContextMenu';
 import Select from '@/components/Select';
 
 const bgPrimary = getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim();
 const textPrimary = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
-const textSecondary = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
-const textMuted = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
 const textLink = getComputedStyle(document.documentElement).getPropertyValue('--text-link').trim();
-const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
-
-const readerStyles = {
-    ...ReactReaderStyle,
-    readerArea: {
-        ...ReactReaderStyle.readerArea,
-        background: bgPrimary,
-    },
-    containerExpanded: {
-        ...ReactReaderStyle.containerExpanded,
-        transform: 'translateX(384px)',
-    },
-    arrow: {
-        ...ReactReaderStyle.arrow,
-        color: textMuted,
-        padding: '0 32px',
-    },
-    tocBackground: {
-        ...ReactReaderStyle.tocBackground,
-        left: 384,
-    },
-    tocArea: {
-        ...ReactReaderStyle.tocArea,
-        background: bgPrimary,
-        width: 384,
-    },
-    tocAreaButton: {
-        ...ReactReaderStyle.tocAreaButton,
-        borderBottom: `1px solid ${borderColor}`,
-        borderRadius: 0,
-        color: textSecondary,
-        paddingLeft: 44,
-    },
-    tocButton: {
-        ...ReactReaderStyle.tocButton,
-        color: textMuted,
-        left: 36,
-        top: 0,
-    },
-    tocButtonExpanded: {
-        ...ReactReaderStyle.tocButtonExpanded,
-        background: bgPrimary,
-    },
-    tocButtonBar: {
-        ...ReactReaderStyle.tocButtonBar,
-        background: textMuted,
-    },
-};
-
-const contentStyles = {
-    body: { background: `${bgPrimary}`, color: `${textPrimary}` },
-    h1: { 'text-align': 'center !important' },
-    a: { color: `${textLink}` },
-};
-
-function baseHref(href) { return href.split("#")[0].split("/").pop(); }
-function trimHref(href) { return href.startsWith('../') ? href.slice('../'.length) : href; }
-function flatten(chapters) {
-    return [].concat.apply([], chapters.map((chapter) => [].concat.apply([chapter], flatten(chapter.subitems))));
-}
 
 function Reader({ identifier, book }) {
     const { navigate } = usePage();
 
-    const [epubData, setEpubData] = useState('loading');
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [location, setLocation] = useState(book.current_location || 0);
-    const [chapter, setChapter] = useState('');
-    const [page, setPage] = useState('');
     const [menuPos, setMenuPos] = useState(null);
     const [fontSize, setFontSize] = useState(Number(localStorage.getItem('fontSize')) || 18);
     const [font, setFont] = useState(localStorage.getItem('font') || 'initial');
-    const renditionRef = useRef(null);
-    const tocRef = useRef(null);
-    const indexedTocRef = useRef(null);
-    const contentCfiMap = useRef([]);
-    const resizeRef = useRef(false);
+    const [useEpubStyles, setUseEpubStyles] = useState(localStorage.getItem(`${identifier}:useEpubStyles`) === 'true');
+
+    const [location, setLocation] = useState(book.current_location || '');
+    const [chapter, setChapter] = useState('');
+    const [page, setPage] = useState('');
+
+    const containerRef = useRef(null);
+    const viewRef = useRef(null);
 
     useEffect(() => {
-        fetch(convertFileSrc('book.epub', 'epub')).then(res => res.arrayBuffer()).then(setEpubData).catch(err => {
-            console.error(err);
-            setEpubData(String(err));
-        });
+        document.addEventListener('keydown', onKeydown);
+        document.addEventListener('wheel', onWheel);
+        return () => {
+            document.removeEventListener('keydown', onKeydown);
+            document.removeEventListener('wheel', onWheel);
+        };
     }, []);
 
     useEffect(() => {
@@ -103,126 +42,121 @@ function Reader({ identifier, book }) {
         win.isFullscreen().then(setIsFullscreen);
     }, [book.title]);
 
-    function setFullscreen(fsn) {
-        const win = getCurrentWindow();
-        win.setFullscreen(fsn).then(() => win.isFullscreen().then(setIsFullscreen)).catch(err => console.error(err));
-    }
-
-    function tryIndexToc() {
-        const rendition = renditionRef.current; const toc = tocRef.current;
-        if (!rendition || !toc) return;
-
-        const indexedToc = [];
-        for (const entry of toc) {
-            const spineItem = rendition.book.spine.spineItems.find(s => baseHref(s.href) === baseHref(entry.href));
-            if (!spineItem) continue;
-
-            indexedToc.push({ ...entry, index: spineItem.index });
-            indexedTocRef.current = indexedToc;
-        }
-    }
-
-    const onLocationChanged = useCallback((loc) => {
-        loc = trimHref(loc);
-        setLocation(loc);
-
-        const rendition = renditionRef.current;
-        const indexedToc = indexedTocRef.current;
-        if (rendition && indexedToc) {
-            const { displayed, cfi, href, index } = rendition.location.start;
-            setPage(`${Math.round(displayed.page / 2)} / ${Math.round(displayed.total / 2)}`);
-
-            const label = contentCfiMap.current.findLast((e) => rendition.epubcfi.compare(e.cfi, cfi) <= 0)?.label ??
-                indexedToc.find(entry => entry.href === href)?.label ?? // this seemingly never works
-                indexedToc.find(entry => baseHref(entry.href) === baseHref(href))?.label ??
-                indexedToc.findLast(entry => entry.index <= index)?.label;
-            setChapter(label ?? '');
-        }
-
-        if (loc.startsWith('epubcfi')) {
-            invoke('save_progress', { identifier, location: loc });
-        };
-    }, [identifier]);
-
-    function getRendition(rendition) {
-        rendition.themes.register('styles', contentStyles);
-        rendition.themes.select('styles');
-        rendition.themes.fontSize(`${fontSize}px`);
-        rendition.themes.font(font);
-
-        rendition.hooks.content.register((contents) => {
-            const doc = contents.document;
-            if (localStorage.getItem(`${identifier}:useEpubStyles`) !== 'true') {
-                doc.querySelectorAll('link[rel="stylesheet"], style:not(#epubjs-inserted-css-, #epubjs-inserted-css-styles)')
-                    .forEach(el => el.remove());
-            }
-
-            if (!tocRef.current) return;
-            const sectionFile = baseHref(rendition.book.spine.get(contents.sectionIndex).href);
-            const entries = flatten(tocRef.current).filter(entry => baseHref(entry.href) === sectionFile);
-            const cfiMap = entries.flatMap(entry => {
-                const id = entry.href.split('#')[1];
-                const el = id && doc.getElementById(id);
-                return el ? { label: entry.label, cfi: contents.cfiFromNode(el) } : [];
-            }, []);
-            contentCfiMap.current = [
-                ...contentCfiMap.current.filter(e => e.section !== sectionFile),
-                ...cfiMap.map(e => ({ ...e, section: sectionFile })),
-            ];
-        });
-
-        let inititialRelocate = true;
-        const contentEl = document.querySelector('.reader-body div div:first-child div:nth-child(3)');
-        if (contentEl) {
-            rendition.on('started', () => contentEl.style.opacity = 0);
-            rendition.on('displayError', () => contentEl.style.opacity = 1);
-            rendition.on('rendered', () => { if (!resizeRef.current) contentEl.style.opacity = 0; });
-
-            const prev = rendition.prev.bind(rendition);
-            const next = rendition.next.bind(rendition);
-            rendition.prev = () => {
-                if (rendition.location && !rendition.location.atStart) contentEl.style.opacity = 0;
-                prev();
-            };
-            rendition.next = () => {
-                if (rendition.location && !rendition.location.atEnd) contentEl.style.opacity = 0;
-                next();
-            };
-        }
-
-        rendition.on('relocated', async (args) => {
-            if (!inititialRelocate) {
-                if (contentEl) contentEl.style.opacity = 1;
-                const loc = rendition.location.start.cfi;
-                if (loc) onLocationChanged(loc);
-            } else {
-                inititialRelocate = false;
-                if (book.current_location) {
-                    await rendition.display(book.current_location);
-                    await rendition.display(book.current_location);
-                } else if (contentEl) contentEl.style.opacity = 1;
-            }
-        });
-
-        let timeout;
-        rendition.on('resized', () => {
-            if (!resizeRef.current) resizeRef.current = true;
-            clearTimeout(timeout);
-            timeout = setTimeout(() => resizeRef.current = false, 200);
-        });
-
-        renditionRef.current = rendition;
-        tryIndexToc();
-    }
-
     useEffect(() => {
-        function onBlur(e) { if (menuPos && document.activeElement?.tagName === 'IFRAME') setMenuPos(null); }
+        function onBlur() { if (menuPos && document.activeElement?.tagName === 'FOLIATE-VIEW') setMenuPos(null); }
         if (menuPos) window.addEventListener('blur', onBlur);
         else window.removeEventListener('blur', onBlur);
         return () => window.removeEventListener('blur', onBlur);
     }, [menuPos]);
 
-    async function onClickBackBtn(e) {
+    useEffect(() => {
+        if (!fontSize) return;
+        localStorage.setItem('fontSize', fontSize);
+        buildStyles();
+    }, [fontSize]);
+
+    useEffect(() => {
+        if (!font) return;
+        localStorage.setItem('font', font);
+        buildStyles();
+    }, [font]);
+
+    useEffect(() => {
+        const renderer = viewRef.current?.renderer;
+        if (useEpubStyles) {
+            localStorage.setItem(`${identifier}:useEpubStyles`, useEpubStyles);
+            if (renderer) {
+                const { doc } = viewRef.current.renderer.getContents()[0];
+                doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => el.removeAttribute('disabled'));
+            }
+        } else {
+            localStorage.removeItem(`${identifier}:useEpubStyles`);
+            if (renderer) {
+                const { doc } = viewRef.current.renderer.getContents()[0];
+                doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => el.disabled = true);
+            }
+        }
+    }, [useEpubStyles]);
+
+    useEffect(() => {
+        invoke('save_progress', { identifier, location });
+    }, [identifier, location]);
+
+    async function buildStyles() {
+        const view = viewRef.current;
+        if (!view?.renderer?.setStyles) return;
+
+        const css = `
+            @namespace epub "http://www.idpf.org/2007/ops";
+            body {
+                background: ${bgPrimary};
+                color: ${textPrimary};
+                font-family: ${font};
+                font-size: ${fontSize}px;
+            }
+            
+            a:link {
+                color: ${textLink};
+            }
+        `;
+
+        view.renderer.setAttribute('max-inline-size', '80%');
+        await view.renderer.setStyles(css);
+    }
+
+    function onLoad(e) {
+        if (containerRef.current) containerRef.current.style.opacity = 0;
+
+        const view = viewRef.current;
+        if (!view) return;
+
+        const { doc } = e.detail;
+        if (localStorage.getItem(`${identifier}:useEpubStyles`) !== 'true') {
+            doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => el.disabled = true);
+        }
+
+        doc.addEventListener('keydown', onKeydown);
+        buildStyles();
+    }
+
+    function onRelocate(e) {
+        const { cfi, tocItem } = e.detail;
+        setLocation(cfi);
+
+        const view = viewRef.current;
+        clearTimeout(viewRef._relocateTimeout);
+        viewRef._relocateTimeout = setTimeout(() => {
+            if (containerRef.current) containerRef.current.style.opacity = 1;
+            setChapter(tocItem?.label ?? '');
+            if (view?.renderer) {
+                const { page, pages } = view.renderer;
+                if (pages > 0) setPage(`${page} / ${pages - 2}`);
+            }
+        }, 50);
+    }
+
+    async function onKeydown(e) {
+        const view = viewRef.current;
+        if (!view) return;
+
+        if (e.key === 'ArrowLeft') await view.goLeft();
+        else if (e.key === 'ArrowRight') await view.goRight();
+    }
+
+    async function onWheel(e) {
+        const view = viewRef.current;
+        if (!view) return;
+
+        if (e.deltaY < 0) await view.goLeft();
+        else if (e.deltaY > 0) await view.goRight();
+    }
+
+    function setFullscreen(fsn) {
+        const win = getCurrentWindow();
+        win.setFullscreen(fsn).then(() => win.isFullscreen().then(setIsFullscreen)).catch(err => console.error(err));
+    }
+
+    async function onClickBackBtn() {
         await invoke('save_progress', { identifier, location });
         await invoke('close_book');
         navigate('library');
@@ -234,18 +168,6 @@ function Reader({ identifier, book }) {
         const rect = e.currentTarget.getBoundingClientRect();
         setMenuPos({ x: rect.left, y: rect.bottom + 4 });
     }
-
-    useEffect(() => {
-        if (!fontSize) return;
-        localStorage.setItem('fontSize', fontSize);
-        if (renditionRef.current) renditionRef.current.themes.fontSize(`${fontSize}px`);
-    }, [fontSize]);
-
-    useEffect(() => {
-        if (!font) return;
-        localStorage.setItem('font', font);
-        if (renditionRef.current) renditionRef.current.themes.font(font);
-    }, [font]);
 
     const settingsBtnRef = useRef(null);
     return (
@@ -272,6 +194,10 @@ function Reader({ identifier, book }) {
                                         <option value='monospace'>Monospace</option>
                                     </Select>
                                 </div>
+                                <div className='settings-item'>
+                                    <p>Use ePub Styles</p>
+                                    <input type='checkbox' checked={useEpubStyles} onChange={e => setUseEpubStyles(e.target.checked)} />
+                                </div>
                             </ContextMenu>
                         )}
                         <div className='control-separator'></div>
@@ -286,24 +212,14 @@ function Reader({ identifier, book }) {
                 </button>
             )}
             <div className='reader-body'>
-                {(() => {
-                    if (epubData === 'loading') return <div className='loader-wrapper'><div className='loader'></div></div>;
-                    else if (typeof epubData === 'string') return <div className='reader-error'><div className='error-text'>{epubData}</div></div>;
-                    else return (
-                        <ReactReader
-                            url={epubData}
-                            location={location}
-                            locationChanged={onLocationChanged}
-                            tocChanged={toc => { tocRef.current = toc; tryIndexToc(); }}
-                            getRendition={getRendition}
-                            readerStyles={readerStyles}
-                            epubOptions={{
-                                allowPopups: localStorage.getItem(`${identifier}:allowPopups`) === 'true',
-                                allowScriptedContent: localStorage.getItem(`${identifier}:allowScripts`) === 'true',
-                            }}
-                        />
-                    );
-                })()}
+                <FoliateReader
+                    bookData={convertFileSrc('book.epub', 'epub')}
+                    lastLocation={book.current_location}
+                    containerRef={containerRef}
+                    viewRef={viewRef}
+                    onLoad={onLoad}
+                    onRelocate={onRelocate}
+                />
             </div>
             {page && (
                 <div className='reader-footer'>

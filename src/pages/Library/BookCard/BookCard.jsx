@@ -18,7 +18,6 @@ function BookCard({ identifier, book, onRemove }) {
     const [cover, setCover] = useState('loading');
     const [useEpubStyles, setUseEpubStyles] = useState(localStorage.getItem(`${identifier}:useEpubStyles`) === 'true');
     const [allowPopups, setAllowPopups] = useState(localStorage.getItem(`${identifier}:allowPopups`) === 'true');
-    const [allowScripts, setAllowScripts] = useState(localStorage.getItem(`${identifier}:allowScripts`) === 'true');
 
     useEffect(() => {
         invoke('get_cover', { identifier }).then(setCover).catch(err => {
@@ -59,11 +58,6 @@ function BookCard({ identifier, book, onRemove }) {
         else localStorage.removeItem(`${identifier}:allowPopups`);
     }, [allowPopups]);
 
-    useEffect(() => {
-        if (allowScripts) localStorage.setItem(`${identifier}:allowScripts`, allowScripts);
-        else localStorage.removeItem(`${identifier}:allowScripts`);
-    }, [allowScripts]);
-
     const contextBtnRef = useRef(null);
     return (
         <div className={`book-card ${menuPos && 'context'}`} onClick={onClick} onContextMenu={onContextMenu}>
@@ -101,10 +95,6 @@ function BookCard({ identifier, book, onRemove }) {
                             <div className='settings-item'>
                                 <p>Allow Popups</p>
                                 <input type='checkbox' checked={allowPopups} onChange={e => setAllowPopups(e.target.checked)} />
-                            </div>
-                            <div className='settings-item danger'>
-                                <p>Allow Scripts</p>
-                                <input type='checkbox' checked={allowScripts} onChange={e => setAllowScripts(e.target.checked)} />
                             </div>
                         </div>
                         <button className='danger' onClick={onClickRemoveBtn}>Remove From Library</button>

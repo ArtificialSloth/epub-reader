@@ -15,8 +15,7 @@
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-fs": "^2.4.5",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-reader": "^2.0.15"
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
