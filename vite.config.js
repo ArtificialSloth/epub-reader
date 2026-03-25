@@ -6,7 +6,21 @@ const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'fix-foliate-glob',
+      enforce: 'pre',
+      transform(code, id) {
+        if (id.includes('foliate-js') && id.endsWith('pdf.js')) {
+          return code.replace(
+            "new URL(`vendor/pdfjs/",
+            "new URL(`./vendor/pdfjs/"
+          );
+        }
+      },
+    },
+  ],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
