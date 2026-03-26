@@ -1,5 +1,5 @@
 import './Reader.css';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { invoke, convertFileSrc } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { usePage } from '@/PageContext';
@@ -16,22 +16,24 @@ function Reader({ identifier, book }) {
 
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [menuPos, setMenuPos] = useState(null);
+    const [expandToc, setExpandToc] = useState(false);
+
     const [fontSize, setFontSize] = useState(Number(localStorage.getItem('fontSize')) || 18);
     const [font, setFont] = useState(localStorage.getItem('font') || 'initial');
     const [useEpubStyles, setUseEpubStyles] = useState(localStorage.getItem(`${identifier}:useEpubStyles`) === 'true');
 
     const [location, setLocation] = useState(book.current_location || '');
+    const [progress, setProgress] = useState(0);
     const [chapter, setChapter] = useState('');
     const [page, setPage] = useState('');
 
-    const containerRef = useRef(null);
     const viewRef = useRef(null);
 
     useEffect(() => {
-        document.addEventListener('keydown', onKeydown);
+        document.addEventListener('keydown', onKeyDown);
         document.addEventListener('wheel', onWheel);
         return () => {
-            document.removeEventListener('keydown', onKeydown);
+            document.removeEventListener('keydown', onKeyDown);
             document.removeEventListener('wheel', onWheel);
         };
     }, []);
@@ -48,6 +50,24 @@ function Reader({ identifier, book }) {
         else window.removeEventListener('blur', onBlur);
         return () => window.removeEventListener('blur', onBlur);
     }, [menuPos]);
+
+    useEffect(() => {
+        function onMouseDown() { setExpandToc(false); }
+        function onKeyDown(e) { if (e.key === 'Escape') setExpandToc(false); }
+        function onBlur() { if (expandToc && document.activeElement?.tagName === 'FOLIATE-VIEW') setExpandToc(false); }
+        function removeListeners() {
+            document.removeEventListener('mousedown', onMouseDown);
+            document.removeEventListener('keydown', onKeyDown);
+            window.removeEventListener('blur', onBlur);
+        }
+
+        if (expandToc) {
+            document.addEventListener('mousedown', onMouseDown);
+            document.addEventListener('keydown', onKeyDown);
+            window.addEventListener('blur', onBlur);
+        } else removeListeners();
+        return () => removeListeners();
+    }, [expandToc]);
 
     useEffect(() => {
         if (!fontSize) return;
@@ -88,58 +108,55 @@ function Reader({ identifier, book }) {
                 color: ${textLink};
             }
 
-            h1 {
+            h1, h2, h3, h4, h5, h6 {
                 margin-block-end: 1em;
                 text-align: center;
             }
         `;
 
-        view.renderer.setAttribute('max-inline-size', '80%');
         await view.renderer.setStyles(css);
     }
 
     function onLoad(e) {
-        if (containerRef.current) containerRef.current.style.opacity = 0;
-        const view = viewRef.current;
-        if (!view) return;
-
         const { doc } = e.detail;
-        doc.addEventListener('keydown', onKeydown);
+        doc.addEventListener('keydown', onKeyDown);
+        doc.addEventListener('wheel', onWheel);
 
         toggleEpubStyles();
         buildStyles();
     }
 
-    function onRelocate(e) {
-        const { cfi, tocItem } = e.detail;
-        setLocation(cfi);
+    function onRelocate(e) { setLocation(e.detail.cfi); }
+    function onRelocated(e) {
+        const { fraction, tocItem } = e.detail;
+        setProgress(Math.round(fraction * 100));
+        setChapter(tocItem?.label ?? '');
 
         const view = viewRef.current;
-        clearTimeout(viewRef._relocateTimeout);
-        viewRef._relocateTimeout = setTimeout(() => {
-            if (containerRef.current) containerRef.current.style.opacity = 1;
-            setChapter(tocItem?.label ?? '');
-            if (view?.renderer) {
-                const { page, pages } = view.renderer;
-                if (pages > 0) setPage(`${page} / ${pages - 2}`);
-            }
-        }, 50);
+        if (view?.renderer) {
+            const { page, pages } = view.renderer;
+            if (pages > 0) setPage(`${page} / ${pages - 2}`);
+        }
     }
 
-    async function onKeydown(e) {
+    async function prev() {
         const view = viewRef.current;
-        if (!view) return;
+        if (view) await view.goLeft();
+    }
 
-        if (e.key === 'ArrowLeft') await view.goLeft();
-        else if (e.key === 'ArrowRight') await view.goRight();
+    async function next() {
+        const view = viewRef.current;
+        if (view) await view.goRight();
+    }
+
+    function onKeyDown(e) {
+        if (e.key === 'ArrowLeft') prev();
+        else if (e.key === 'ArrowRight') next();
     }
 
     async function onWheel(e) {
-        const view = viewRef.current;
-        if (!view) return;
-
-        if (e.deltaY < 0) await view.goLeft();
-        else if (e.deltaY > 0) await view.goRight();
+        if (e.deltaY < 0) prev();
+        else if (e.deltaY > 0) next();
     }
 
     function setFullscreen(fsn) {
@@ -168,6 +185,21 @@ function Reader({ identifier, book }) {
         const rect = e.currentTarget.getBoundingClientRect();
         setMenuPos({ x: rect.left, y: rect.bottom + 4 });
     }
+
+    function onClickTocItem(tocItem) {
+        viewRef.current.goTo(tocItem.href);
+        setExpandToc(!expandToc);
+    }
+
+    const renderTocItems = (items, depth = 0) =>
+        items?.map((entry, index) => (
+            <Fragment key={`${depth}-${index}`}>
+                <button className='toc-item' style={{ paddingLeft: `${32 + depth * 16}px` }} onClick={() => onClickTocItem(entry)}>
+                    {entry.label}
+                </button>
+                {entry.subitems && renderTocItems(entry.subitems, depth + 1)}
+            </Fragment>
+        ));
 
     const settingsBtnRef = useRef(null);
     return (
@@ -211,23 +243,40 @@ function Reader({ identifier, book }) {
                     <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3'></path></svg>
                 </button>
             )}
-            <div className='reader-body'>
-                <FoliateReader
-                    bookData={convertFileSrc('book.epub', 'epub')}
-                    lastLocation={book.current_location}
-                    containerRef={containerRef}
-                    viewRef={viewRef}
-                    onLoad={onLoad}
-                    onRelocate={onRelocate}
-                />
+            <div className={`reader-body ${expandToc ? 'expand' : ''}`}>
+                {viewRef.current?.book?.toc?.length > 0 &&
+                    <div className='reader-toc' onWheel={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
+                        {renderTocItems(viewRef.current.book.toc)}
+                    </div>
+                }
+                <div className='reader-content'>
+                    {viewRef.current?.book?.toc?.length > 0 &&
+                        <button className='reader-toc-btn' onClick={() => setExpandToc(!expandToc)}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                        </button>
+                    }
+                    <div className='reader-nav prev' onClick={prev}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+                    </div>
+                    <FoliateReader
+                        bookData={convertFileSrc('book.epub', 'epub')}
+                        lastLocation={book.current_location}
+                        viewRef={viewRef}
+                        onLoad={onLoad}
+                        onRelocate={onRelocate}
+                        onRelocated={onRelocated}
+                    />
+                    <div className='reader-nav next' onClick={next}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+                    </div>
+                </div>
             </div>
-            {page && (
+            {page &&
                 <div className='reader-footer'>
                     <p>{page}</p>
-                    <p>{chapter}</p>
+                    <p>{chapter} ({progress}%)</p>
                 </div>
-            )}
-
+            }
         </div >
     );
 }

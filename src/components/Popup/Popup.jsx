@@ -13,7 +13,7 @@ function Popup({ onConfirm, onClose, children }) {
     }, [onClose]);
 
     return createPortal(
-        <div className='popup-overlay' onMouseDown={onClose} onContextMenu={e => e.stopPropagation()} onClick={e => e.stopPropagation(e)}>
+        <div className='popup-overlay' onMouseDown={onClose} onContextMenu={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
             <div className='popup' onMouseDown={e => e.stopPropagation()}>
                 {children}
             </div>

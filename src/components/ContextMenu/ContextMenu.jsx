@@ -17,20 +17,20 @@ function ContextMenu({ parentRef, x, y, onClose, children }) {
     }, [x, y]);
 
     useEffect(() => {
-        function handleOutside(e) {
+        function onMouseDown(e) {
             if (!parentRef.current.contains(e.target)) onClose();
         }
-        function handleEsc(e) { if (e.key === 'Escape') onClose(); }
-        document.addEventListener('mousedown', handleOutside);
-        document.addEventListener('keydown', handleEsc);
+        function onKeyDown(e) { if (e.key === 'Escape') onClose(); }
+        document.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('keydown', onKeyDown);
         return () => {
-            document.removeEventListener('mousedown', handleOutside);
-            document.removeEventListener('keydown', handleEsc);
+            document.removeEventListener('mousedown', onMouseDown);
+            document.removeEventListener('keydown', onKeyDown);
         };
     }, [onClose]);
 
     return createPortal(
-        <div ref={ref} className='context-menu' style={{ left: x, top: y }} onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation(e)}>
+        <div ref={ref} className='context-menu' style={{ left: x, top: y }} onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
             {children}
         </div>,
         document.body

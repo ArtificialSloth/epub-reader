@@ -3,7 +3,6 @@ select {
     background-color: var(--bg-secondary);
     background-position: right 6px center;
     background-repeat: no-repeat;
-    color: var(--text-primary);
     padding: 7px 32px 7px 12px;
 }
 

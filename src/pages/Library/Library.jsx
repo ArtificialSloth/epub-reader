@@ -75,9 +75,9 @@ function Library() {
                 else if (Object.entries(library).length === 0) return <div className='library-empty'>No books yet. Click <strong>+ Add Book</strong> to get started.</div>;
                 else return (
                     <div className='library-grid'>
-                        {sortedEntries().map(([identifier, book]) => (
+                        {sortedEntries().map(([identifier, book]) =>
                             <BookCard key={identifier} identifier={identifier} book={book} onRemove={removeBook} />
-                        ))}
+                        )}
                     </div>
                 );
             })()}

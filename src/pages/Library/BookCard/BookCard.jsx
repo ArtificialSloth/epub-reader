@@ -60,7 +60,7 @@ function BookCard({ identifier, book, onRemove }) {
 
     const contextBtnRef = useRef(null);
     return (
-        <div className={`book-card ${menuPos && 'context'}`} onClick={onClick} onContextMenu={onContextMenu}>
+        <div className={`book-card ${menuPos ? 'context' : ''}`} onClick={onClick} onContextMenu={onContextMenu}>
             <div className='book-cover'>
                 {(() => {
                     if (cover === 'error') return (
