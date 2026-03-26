@@ -52,7 +52,7 @@ function Reader({ identifier, book }) {
     }, [menuPos]);
 
     useEffect(() => {
-        function onMouseDown() { setExpandToc(false); }
+        function onMouseDown(e) { if (!backBtnRef.current?.contains(e.target)) setExpandToc(false); }
         function onKeyDown(e) { if (e.key === 'Escape') setExpandToc(false); }
         function onBlur() { if (expandToc && document.activeElement?.tagName === 'FOLIATE-VIEW') setExpandToc(false); }
         function removeListeners() {
@@ -201,12 +201,13 @@ function Reader({ identifier, book }) {
             </Fragment>
         ));
 
+    const backBtnRef = useRef(null);
     const settingsBtnRef = useRef(null);
     return (
         <div className='reader'>
             {!isFullscreen ? (
                 <div className='reader-header'>
-                    <button className='reader-back-btn' onClick={onClickBackBtn}>
+                    <button ref={backBtnRef} className='reader-back-btn' onClick={onClickBackBtn}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
                     </button>
                     <div className='reader-controls'>

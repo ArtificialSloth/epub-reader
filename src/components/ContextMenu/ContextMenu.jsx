@@ -18,7 +18,7 @@ function ContextMenu({ parentRef, x, y, onClose, children }) {
 
     useEffect(() => {
         function onMouseDown(e) {
-            if (!parentRef.current.contains(e.target)) onClose();
+            if (!parentRef.current?.contains(e.target)) onClose();
         }
         function onKeyDown(e) { if (e.key === 'Escape') onClose(); }
         document.addEventListener('mousedown', onMouseDown);
