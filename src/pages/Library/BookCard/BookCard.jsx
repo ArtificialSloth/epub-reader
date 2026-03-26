@@ -38,6 +38,7 @@ function BookCard({ identifier, book, onRemove }) {
     }
 
     function onClickContextBtn(e) {
+        e.stopPropagation();
         if (menuPos) return setMenuPos(null);
         const rect = e.currentTarget.getBoundingClientRect();
         setMenuPos({ x: rect.left, y: rect.bottom + 4 });
