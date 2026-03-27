@@ -6,7 +6,7 @@ import { usePage } from '@/context/PageContext';
 import ContextMenu from '@/components/ContextMenu';
 import Select from '@/components/Select';
 
-function ReaderHeader({ backBtnRef, fontFamily, setFontFamily, fontSize, setFontSize, useEpubStyles, setUseEpubStyles, allowPopups, setAllowPopups }) {
+function ReaderHeader({ backBtnRef, fontSize, setFontSize, fontFamily, setFontFamily, useEpubStyles, setUseEpubStyles, allowPopups, setAllowPopups }) {
     const { navigate } = usePage();
 
     const [isFullscreen, setIsFullscreen] = useState(false);

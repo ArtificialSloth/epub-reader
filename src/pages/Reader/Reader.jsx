@@ -10,8 +10,8 @@ import TableOfContents from './TableOfContents';
 import ReaderHeader from './ReaderHeader/ReaderHeader';
 
 function Reader({ identifier, book }) {
-    const [fontFamily, setFontFamily] = useState(localStorage.getItem('font') || 'initial');
     const [fontSize, setFontSize] = useState(localStorage.getItem('fontSize') || '18');
+    const [fontFamily, setFontFamily] = useState(localStorage.getItem('font') || 'initial');
     const [useEpubStyles, setUseEpubStyles] = useBookSetting(identifier, 'useEpubStyles');
     const [allowPopups, setAllowPopups] = useBookSetting(identifier, 'allowPopups');
 
@@ -22,11 +22,9 @@ function Reader({ identifier, book }) {
     const [page, setPage] = useState('');
 
     const viewRef = useRef(null);
-    const fontFamilyRef = useRef(localStorage.getItem('font') || 'initial');
-    const fontSizeRef = useRef(localStorage.getItem('fontSize') || '18');
+    const backBtnRef = useRef(null);
     const useEpubStylesRef = useRef(useEpubStyles);
     const allowPopupsRef = useRef(allowPopups);
-    const backBtnRef = useRef(null);
 
     const bgPrimary = useMemo(() => getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim(), []);
     const textPrimary = useMemo(() => getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(), []);
@@ -48,16 +46,16 @@ function Reader({ identifier, book }) {
     }, [book.title]);
 
     useEffect(() => {
-        if (!fontFamily) return;
-        localStorage.setItem('font', fontFamily);
-        buildStyles();
-    }, [fontFamily]);
-
-    useEffect(() => {
         if (!fontSize) return;
         localStorage.setItem('fontSize', fontSize);
         buildStyles();
     }, [fontSize]);
+
+    useEffect(() => {
+        if (!fontFamily) return;
+        localStorage.setItem('font', fontFamily);
+        buildStyles();
+    }, [fontFamily]);
 
     useEffect(() => {
         useEpubStylesRef.current = useEpubStyles;
@@ -95,8 +93,8 @@ function Reader({ identifier, book }) {
             ${customStyles.epub}
 
             body {
-                font-family: ${fontFamilyRef.current};
-                font-size: ${fontSizeRef.current}px;
+                font-size: ${fontSize}px;
+                font-family: ${fontFamily};
             }
         `;
 
@@ -154,7 +152,6 @@ function Reader({ identifier, book }) {
     return (
         <div className='reader'>
             <ReaderHeader
-                identifier={identifier}
                 backBtnRef={backBtnRef}
                 fontFamily={fontFamily}
                 setFontFamily={setFontFamily}
