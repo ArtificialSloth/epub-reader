@@ -1,7 +1,7 @@
 import './BookCard.css';
 import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { usePage } from '@/PageContext';
+import { usePage } from '@/context/PageContext';
 import ContextMenu from '@/components/ContextMenu';
 import PopUp from '@/components/Popup';
 
@@ -19,12 +19,24 @@ function BookCard({ identifier, book, onRemove }) {
     const [useEpubStyles, setUseEpubStyles] = useState(localStorage.getItem(`${identifier}:useEpubStyles`) === 'true');
     const [allowPopups, setAllowPopups] = useState(localStorage.getItem(`${identifier}:allowPopups`) === 'true');
 
+    const contextBtnRef = useRef(null);
+
     useEffect(() => {
         invoke('get_cover', { identifier }).then(setCover).catch(err => {
             console.error(err);
             setCover('error');
         });
     }, [identifier]);
+
+    useEffect(() => {
+        if (useEpubStyles) localStorage.setItem(`${identifier}:useEpubStyles`, useEpubStyles);
+        else localStorage.removeItem(`${identifier}:useEpubStyles`);
+    }, [useEpubStyles]);
+
+    useEffect(() => {
+        if (allowPopups) localStorage.setItem(`${identifier}:allowPopups`, allowPopups);
+        else localStorage.removeItem(`${identifier}:allowPopups`);
+    }, [allowPopups]);
 
     async function onClick() {
         await invoke('open_book', { identifier })
@@ -49,17 +61,6 @@ function BookCard({ identifier, book, onRemove }) {
         setMenuPos({ x: e.clientX, y: e.clientY });
     }
 
-    useEffect(() => {
-        if (useEpubStyles) localStorage.setItem(`${identifier}:useEpubStyles`, useEpubStyles);
-        else localStorage.removeItem(`${identifier}:useEpubStyles`);
-    }, [useEpubStyles]);
-
-    useEffect(() => {
-        if (allowPopups) localStorage.setItem(`${identifier}:allowPopups`, allowPopups);
-        else localStorage.removeItem(`${identifier}:allowPopups`);
-    }, [allowPopups]);
-
-    const contextBtnRef = useRef(null);
     return (
         <div className={`book-card ${menuPos ? 'context' : ''}`} onClick={onClick} onContextMenu={onContextMenu}>
             <div className='book-cover'>

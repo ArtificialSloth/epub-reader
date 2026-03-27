@@ -13,6 +13,20 @@ pub fn run() {
         last_save: Instant::now(),
     };
     
+    #[tauri::command]
+    fn get_custom_styles() -> Result<String, String> {
+        let path = std::env::current_exe()
+            .map_err(|e| e.to_string())?
+            .parent()
+            .map(|p| p.join("styles.css"))
+            .ok_or_else(|| String::from("could not resolve exe directory"))?;
+        match std::fs::read_to_string(path) {
+            Ok(s) => Ok(s),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
+            Err(e) => Err(e.to_string()),
+        }
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_cli::init())
         .manage(AppState {
@@ -39,6 +53,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            get_custom_styles,
             library::get_library,
             library::remove_book,
             library::add_book,

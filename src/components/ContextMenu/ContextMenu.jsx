@@ -10,10 +10,8 @@ function ContextMenu({ parentRef, x, y, onClose, children }) {
         if (!el) return;
 
         const rect = el.getBoundingClientRect();
-        if (rect.right > window.innerWidth)
-            el.style.left = `${x - rect.width}px`;
-        if (rect.bottom > window.innerHeight)
-            el.style.top = `${y - rect.height}px`;
+        if (rect.right > window.innerWidth) el.style.left = `${x - rect.width}px`;
+        if (rect.bottom > window.innerHeight) el.style.top = `${y - rect.height}px`;
     }, [x, y]);
 
     useEffect(() => {

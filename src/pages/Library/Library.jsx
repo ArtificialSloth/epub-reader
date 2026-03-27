@@ -6,8 +6,10 @@ import Select from '@/components/Select';
 import BookCard from './BookCard';
 
 function Library() {
-    const [sort, setSort] = useState(localStorage.getItem('sort') ?? 'recently-added');
     const [library, setLibrary] = useState('loading');
+    const [sort, setSort] = useState(localStorage.getItem('sort') ?? 'recently-added');
+
+    useEffect(() => { fetchLibrary(); }, []);
 
     async function fetchLibrary() {
         await invoke('get_library').then(setLibrary).catch(err => {
@@ -15,7 +17,6 @@ function Library() {
             setLibrary(String(err));
         });
     }
-    useEffect(() => { fetchLibrary(); }, []);
 
     async function addBook() {
         const paths = await open({
@@ -28,9 +29,9 @@ function Library() {
     }
 
     async function removeBook(identifier) {
-        if (!identifier) return;
-        await invoke('remove_book', { identifier });
-        await fetchLibrary();
+        await invoke('remove_book', { identifier })
+            .then(fetchLibrary)
+            .catch(err => console.error(err));
     }
 
     function onChange(e) {

@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import '@/lib/foliate-js/view.js';
 
-function FoliateReader({ bookData, lastLocation, viewRef, onLoad, onRelocate, onRelocated }) {
+function FoliateReader({ bookData, lastLocation, viewRef, onInit, onLoad, onRelocate, onRelocated }) {
     const containerRef = useRef(null);
 
     useEffect(() => {
@@ -29,8 +29,10 @@ function FoliateReader({ bookData, lastLocation, viewRef, onLoad, onRelocate, on
 
             view.open(bookData)
                 .then(() => view.init({ lastLocation }))
-                .then(() => view.renderer.setAttribute('max-inline-size', `${entry.contentRect.width / 2}px`))
-                .catch(err => console.error(err));
+                .then(() => {
+                    view.renderer.setAttribute('max-inline-size', `${entry.contentRect.width / 2}px`);
+                    onInit();
+                }).catch(err => console.error(err));
         });
         observer.observe(container);
 

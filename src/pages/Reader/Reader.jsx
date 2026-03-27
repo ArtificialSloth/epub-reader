@@ -2,7 +2,9 @@ import './Reader.css';
 import { useState, useEffect, useRef, Fragment } from 'react';
 import { invoke, convertFileSrc } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { usePage } from '@/PageContext';
+import { openUrl } from '@tauri-apps/plugin-opener';
+import { usePage } from '@/context/PageContext';
+import { useCustomStyles } from '@/context/CustomStylesContext';
 import FoliateReader from '@/components/FoliateReader';
 import ContextMenu from '@/components/ContextMenu';
 import Select from '@/components/Select';
@@ -21,13 +23,18 @@ function Reader({ identifier, book }) {
     const [fontSize, setFontSize] = useState(Number(localStorage.getItem('fontSize')) || 18);
     const [font, setFont] = useState(localStorage.getItem('font') || 'initial');
     const [useEpubStyles, setUseEpubStyles] = useState(localStorage.getItem(`${identifier}:useEpubStyles`) === 'true');
+    const [allowPopups, setAllowPopups] = useState(localStorage.getItem(`${identifier}:allowPopups`) === 'true');
 
     const [location, setLocation] = useState(book.current_location || '');
     const [progress, setProgress] = useState(0);
     const [chapter, setChapter] = useState('');
     const [page, setPage] = useState('');
 
+    const backBtnRef = useRef(null);
+    const settingsBtnRef = useRef(null);
     const viewRef = useRef(null);
+
+    const customStyles = useCustomStyles();
 
     useEffect(() => {
         document.addEventListener('keydown', onKeyDown);
@@ -88,6 +95,11 @@ function Reader({ identifier, book }) {
     }, [useEpubStyles]);
 
     useEffect(() => {
+        if (allowPopups) localStorage.setItem(`${identifier}:allowPopups`, allowPopups);
+        else localStorage.removeItem(`${identifier}:allowPopups`);
+    }, [allowPopups]);
+
+    useEffect(() => {
         invoke('save_progress', { identifier, location });
     }, [identifier, location]);
 
@@ -100,10 +112,8 @@ function Reader({ identifier, book }) {
             body {
                 background: ${bgPrimary};
                 color: ${textPrimary};
-                font-family: ${font};
-                font-size: ${fontSize}px;
             }
-            
+
             a:link {
                 color: ${textLink};
             }
@@ -112,18 +122,31 @@ function Reader({ identifier, book }) {
                 margin-block-end: 1em;
                 text-align: center;
             }
+
+            ${customStyles.epub}
+
+            body {
+                font-family: ${font};
+                font-size: ${fontSize}px;
+            }
         `;
 
         await view.renderer.setStyles(css);
+    }
+
+    function onInit() {
+        viewRef.current?.addEventListener('external-link', e => {
+            e.preventDefault();
+            if (allowPopups) openUrl(e.detail.href);
+        });
+        buildStyles();
     }
 
     function onLoad(e) {
         const { doc } = e.detail;
         doc.addEventListener('keydown', onKeyDown);
         doc.addEventListener('wheel', onWheel);
-
-        toggleEpubStyles();
-        buildStyles();
+        toggleEpubStyles(doc);
     }
 
     function onRelocate(e) { setLocation(e.detail.cfi); }
@@ -139,36 +162,34 @@ function Reader({ identifier, book }) {
         }
     }
 
-    async function prev() {
-        const view = viewRef.current;
-        if (view) await view.goLeft();
-    }
-
-    async function next() {
-        const view = viewRef.current;
-        if (view) await view.goRight();
-    }
+    const prev = async () => await viewRef.current?.goLeft();
+    const next = async () => await viewRef.current?.goRight();
 
     function onKeyDown(e) {
         if (e.key === 'ArrowLeft') prev();
         else if (e.key === 'ArrowRight') next();
     }
 
-    async function onWheel(e) {
+    function onWheel(e) {
         if (e.deltaY < 0) prev();
         else if (e.deltaY > 0) next();
     }
 
     function setFullscreen(fsn) {
         const win = getCurrentWindow();
-        win.setFullscreen(fsn).then(() => win.isFullscreen().then(setIsFullscreen)).catch(err => console.error(err));
+        win.setFullscreen(fsn)
+            .then(() => win.isFullscreen())
+            .then(setIsFullscreen)
+            .catch(err => console.error(err));
     }
 
-    function toggleEpubStyles() {
-        const renderer = viewRef.current?.renderer;
-        if (!renderer) return;
+    function toggleEpubStyles(doc) {
+        if (!doc) {
+            const renderer = viewRef.current?.renderer;
+            if (!renderer) return;
+            doc = renderer.getContents()[0].doc;
+        }
 
-        const { doc } = viewRef.current.renderer.getContents()[0];
         if (useEpubStyles) doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => el.removeAttribute('disabled'));
         else doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => el.disabled = true);
     }
@@ -187,7 +208,7 @@ function Reader({ identifier, book }) {
     }
 
     function onClickTocItem(tocItem) {
-        viewRef.current.goTo(tocItem.href);
+        viewRef.current?.goTo(tocItem.href);
         setExpandToc(!expandToc);
     }
 
@@ -201,18 +222,16 @@ function Reader({ identifier, book }) {
             </Fragment>
         ));
 
-    const backBtnRef = useRef(null);
-    const settingsBtnRef = useRef(null);
     return (
         <div className='reader'>
-            {!isFullscreen ? (
+            {!isFullscreen ?
                 <div className='reader-header'>
                     <button ref={backBtnRef} className='reader-back-btn' onClick={onClickBackBtn}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
                     </button>
                     <div className='reader-controls'>
                         <button ref={settingsBtnRef} className='reader-settings-btn' title='Settings' onClick={onClickSettingsBtn}>Aa</button>
-                        {menuPos && (
+                        {menuPos &&
                             <ContextMenu parentRef={settingsBtnRef} x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
                                 <div className='settings-item'>
                                     <p>Font Size</p>
@@ -231,19 +250,23 @@ function Reader({ identifier, book }) {
                                     <p>Use ePub Styles</p>
                                     <input type='checkbox' checked={useEpubStyles} onChange={e => setUseEpubStyles(e.target.checked)} />
                                 </div>
+                                <div className='settings-item'>
+                                    <p>Allow Popups</p>
+                                    <input type='checkbox' checked={allowPopups} onChange={e => setAllowPopups(e.target.checked)} />
+                                </div>
                             </ContextMenu>
-                        )}
+                        }
                         <div className='control-separator'></div>
                         <button className='reader-fullscreen-btn' title='Fullscreen' onClick={() => setFullscreen(true)}>
                             <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'></path></svg>
                         </button>
                     </div>
                 </div>
-            ) : (
+                :
                 <button className='reader-minimize-btn' title='Minimize' onClick={() => setFullscreen(false)}>
                     <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3'></path></svg>
                 </button>
-            )}
+            }
             <div className={`reader-body ${expandToc ? 'expand' : ''}`}>
                 {viewRef.current?.book?.toc?.length > 0 &&
                     <div className='reader-toc' onWheel={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
@@ -263,6 +286,7 @@ function Reader({ identifier, book }) {
                         bookData={convertFileSrc('book.epub', 'epub')}
                         lastLocation={book.current_location}
                         viewRef={viewRef}
+                        onInit={onInit}
                         onLoad={onLoad}
                         onRelocate={onRelocate}
                         onRelocated={onRelocated}

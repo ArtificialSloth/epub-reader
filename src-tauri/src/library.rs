@@ -3,16 +3,16 @@ use crate::types::*;
 use std::{time::SystemTime, time::Instant};
 use tauri::State;
 
-fn get_path() -> std::path::PathBuf {
+fn get_path() -> Result<std::path::PathBuf, String> {
     std::env::current_exe()
-        .unwrap()
+        .map_err(|e| e.to_string())?
         .parent()
-        .unwrap()
-        .join("library.json")
+        .map(|p| p.join("library.json"))
+        .ok_or_else(|| String::from("could not resolve exe directory"))
 }
 
 pub fn load() -> Result<Library, String> {
-    let path = get_path();
+    let path = get_path()?;
 
     let content = match std::fs::read_to_string(path) {
         Ok(s) => s,
@@ -25,7 +25,7 @@ pub fn load() -> Result<Library, String> {
 }
 
 pub fn save(library_state: &mut LibraryState) -> Result<(), String> {
-    let path = get_path();
+    let path = get_path()?;
     let content = serde_json::to_string_pretty(&library_state.library).map_err(|e| e.to_string())?;
 
     std::fs::write(path, content).map_err(|e| e.to_string())?;
