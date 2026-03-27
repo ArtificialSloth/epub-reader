@@ -11,8 +11,8 @@ function Library() {
 
     useEffect(() => { fetchLibrary(); }, []);
 
-    async function fetchLibrary() {
-        await invoke('get_library').then(setLibrary).catch(err => {
+    function fetchLibrary() {
+        invoke('get_library').then(setLibrary).catch(err => {
             console.error(err);
             setLibrary(String(err));
         });
@@ -25,11 +25,11 @@ function Library() {
         });
         if (!paths || paths.length === 0) return;
         await Promise.all(paths.map(path => invoke('add_book', { path })));
-        await fetchLibrary();
+        fetchLibrary();
     }
 
-    async function removeBook(identifier) {
-        await invoke('remove_book', { identifier })
+    function removeBook(identifier) {
+        invoke('remove_book', { identifier })
             .then(fetchLibrary)
             .catch(err => console.error(err));
     }

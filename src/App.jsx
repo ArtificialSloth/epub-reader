@@ -29,7 +29,10 @@ function App() {
                 const marker = '/* @epub */';
                 const idx = css.indexOf(marker);
                 return idx === -1 ? { app: css, epub: '' } : { app: css.slice(0, idx), epub: css.slice(idx + marker.length) };
-            }).catch(err => console.error(err));
+            }).catch(err => {
+                console.error(err);
+                return { app: '', epub: '' };
+            });
 
             if (styles.app) {
                 const el = document.createElement('style');

@@ -2,8 +2,9 @@ import './BookCard.css';
 import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { usePage } from '@/context/PageContext';
+import { useBookSetting } from '@/hooks/useBookSetting';
 import ContextMenu from '@/components/ContextMenu';
-import PopUp from '@/components/Popup';
+import Popup from '@/components/Popup';
 
 function formatDate(timestamp) {
     if (!timestamp) return '—';
@@ -16,8 +17,8 @@ function BookCard({ identifier, book, onRemove }) {
     const [menuPos, setMenuPos] = useState(null);
     const [popupOpen, setPopupOpen] = useState(false);
     const [cover, setCover] = useState('loading');
-    const [useEpubStyles, setUseEpubStyles] = useState(localStorage.getItem(`${identifier}:useEpubStyles`) === 'true');
-    const [allowPopups, setAllowPopups] = useState(localStorage.getItem(`${identifier}:allowPopups`) === 'true');
+    const [useEpubStyles, setUseEpubStyles] = useBookSetting(identifier, 'useEpubStyles');
+    const [allowPopups, setAllowPopups] = useBookSetting(identifier, 'allowPopups');
 
     const contextBtnRef = useRef(null);
 
@@ -28,23 +29,13 @@ function BookCard({ identifier, book, onRemove }) {
         });
     }, [identifier]);
 
-    useEffect(() => {
-        if (useEpubStyles) localStorage.setItem(`${identifier}:useEpubStyles`, useEpubStyles);
-        else localStorage.removeItem(`${identifier}:useEpubStyles`);
-    }, [useEpubStyles]);
-
-    useEffect(() => {
-        if (allowPopups) localStorage.setItem(`${identifier}:allowPopups`, allowPopups);
-        else localStorage.removeItem(`${identifier}:allowPopups`);
-    }, [allowPopups]);
-
-    async function onClick() {
-        await invoke('open_book', { identifier })
+    function onClick() {
+        invoke('open_book', { identifier })
             .then(result => navigate('reader', { identifier, book: result }))
             .catch(err => console.error(err));
     }
 
-    function onClickRemoveBtn(e) {
+    function onClickRemoveBtn() {
         setMenuPos(null);
         setPopupOpen(true);
     }
@@ -73,7 +64,7 @@ function BookCard({ identifier, book, onRemove }) {
                     );
                     else if (cover === 'loading') return <div className='loader'></div>;
                     else if (cover === '') return <div className='cover-placeholder'>{book.title}</div>;
-                    else return <img src={cover}></img>;
+                    else return <img src={cover} alt="" />;
                 })()}
             </div>
             <div className='book-footer'>
@@ -103,14 +94,14 @@ function BookCard({ identifier, book, onRemove }) {
                     </ContextMenu>
                 )}
                 {popupOpen && (
-                    <PopUp onConfirm={e => onRemove(identifier)} onClose={() => setPopupOpen(false)}>
+                    <Popup onConfirm={() => onRemove(identifier)} onClose={() => setPopupOpen(false)}>
                         <p className='popup-label'>Remove "{book.title}"?</p>
                         <p className='popup-text'>The file will remain, but all saved progress will be lost.</p>
                         <div className='popup-actions'>
-                            <button onClick={e => setPopupOpen(false)}>Cancel</button>
+                            <button onClick={() => setPopupOpen(false)}>Cancel</button>
                             <button className='danger' onClick={() => onRemove(identifier)}>Remove</button>
                         </div>
-                    </PopUp>
+                    </Popup>
                 )}
             </div>
         </div>
