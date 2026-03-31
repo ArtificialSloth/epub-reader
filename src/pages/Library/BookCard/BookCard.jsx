@@ -73,12 +73,12 @@ function BookCard({ identifier, book, onRemove }) {
                 {menuPos && (
                     <ContextMenu parentRef={contextBtnRef} x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
                         <div className='context-meta'>
-                            <div className='context-meta-label'>Author:</div>
-                            <div className='context-meta-item'>{book.author || '_'}</div>
-                            <div className='context-meta-label'>Added:</div>
-                            <div className='context-meta-item'>{formatDate(book.added)}</div>
-                            <div className='context-meta-label'>Last Read:</div>
-                            <div className='context-meta-item'>{formatDate(book.opened)}</div>
+                            <div className='meta-label'>Author:</div>
+                            <div className='meta-item'>{book.author || '_'}</div>
+                            <div className='meta-label'>Added:</div>
+                            <div className='meta-item'>{formatDate(book.added)}</div>
+                            <div className='meta-label'>Last Read:</div>
+                            <div className='meta-item'>{formatDate(book.opened)}</div>
                         </div>
                         <div className='book-settings'>
                             <div className='settings-item'>

@@ -11,6 +11,10 @@ function Library() {
 
     useEffect(() => { fetchLibrary(); }, []);
 
+    useEffect(() => {
+        localStorage.setItem('sort', sort);
+    }, [sort]);
+
     function fetchLibrary() {
         invoke('get_library').then(setLibrary).catch(err => {
             console.error(err);
@@ -34,12 +38,6 @@ function Library() {
             .catch(err => console.error(err));
     }
 
-    function onChange(e) {
-        const value = e.target.value;
-        localStorage.setItem('sort', value);
-        setSort(value);
-    }
-
     function sortedEntries() {
         const entries = Object.entries(library);
         switch (sort) {
@@ -56,17 +54,17 @@ function Library() {
             <div className='library-header'>
                 <h1>My Library</h1>
                 <div className='library-controls'>
-                    <Select value={sort} onChange={onChange}>
-                        <option value='recently-added'>Recently Added</option>
-                        <option value='recently-read'>Recently Read</option>
-                        <option value='a-z'>A-Z</option>
-                        <option value='z-a'>Z-A</option>
-                    </Select>
+                    <Select value={sort} setValue={setSort} options={[
+                        { value: 'recently-added', label: 'Recently Added' },
+                        { value: 'recently-read', label: 'Recently Read' },
+                        { value: 'a-z', label: 'A-Z' },
+                        { value: 'z-a', label: 'Z-A' },
+                    ]} />
                     <button onClick={addBook}>+ Add Book</button>
                 </div>
             </div>
             {(() => {
-                if (library === 'loading') return (<div className='loader-wrapper'><div className='loader'></div></div>);
+                if (library === 'loading') return <div className='loader-wrapper'><div className='loader'></div></div>;
                 else if (typeof library === 'string') return (
                     <div className='library-error'>
                         <p className='error-label'>There was an error loading your library:</p>

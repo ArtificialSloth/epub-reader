@@ -8,6 +8,7 @@ function FoliateReader({ bookData, lastLocation, viewRef, onInit, onLoad, onRelo
         const container = containerRef.current;
         const view = document.createElement('foliate-view');
 
+        const onResize = () => view?.renderer?.setAttribute('max-inline-size', `${container.clientWidth / 2}px`);
         const observer = new ResizeObserver(([entry]) => {
             observer.disconnect();
             viewRef.current = view;
@@ -30,7 +31,8 @@ function FoliateReader({ bookData, lastLocation, viewRef, onInit, onLoad, onRelo
             view.open(bookData)
                 .then(() => view.init({ lastLocation }))
                 .then(() => {
-                    view.renderer.setAttribute('max-inline-size', `${entry.contentRect.width / 2}px`);
+                    view.renderer.setAttribute('max-inline-size', `${container.clientWidth / 2}px`);
+                    window.addEventListener('resize', onResize);
                     onInit();
                 }).catch(err => console.error(err));
         });
@@ -38,6 +40,7 @@ function FoliateReader({ bookData, lastLocation, viewRef, onInit, onLoad, onRelo
 
         return () => {
             observer.disconnect();
+            window.removeEventListener('resize', onResize);
 
             function suppress(e) { if (e.message?.includes('cannot be destructured')) e.preventDefault(); };
             window.addEventListener('error', suppress);

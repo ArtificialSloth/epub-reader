@@ -45,15 +45,26 @@
     margin: 8px;
 }
 
-.settings-item {
-    align-items: center;
-    display: flex;
+.reader-settings {
+    display: grid;
     gap: 12px;
-    justify-content: space-between;
+    grid-template-columns: auto 1fr;
     padding: 8px;
 }
 
-.settings-item input {
+.reader-settings .settings-label {
+    align-items: center;
+    display: flex;
+}
+
+.reader-settings .settings-item {
+    align-items: center;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.reader-settings .settings-item input[type="number"],
+.reader-settings .settings-item input[type="select"] {
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: 0;

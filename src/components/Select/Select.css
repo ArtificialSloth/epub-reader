@@ -1,12 +1,49 @@
-select {
-    appearance: none;
-    background-color: var(--bg-secondary);
-    background-position: right 6px center;
-    background-repeat: no-repeat;
-    padding: 7px 32px 7px 12px;
+.select {
+    cursor: pointer;
+    user-select: none;
 }
 
-option {
+.select-dropdown {
+    align-items: center;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    gap: 4px;
+    justify-content: space-between;
+    padding: 4px;
+    padding-left: 12px;
+}
+
+.select.active .select-dropdown {
+    border-radius: 6px 6px 0px 0px;
+}
+
+.select.active .select-dropdown,
+.select-dropdown:hover {
+    border-color: var(--border-hover);
+}
+
+.select-options {
+    position: absolute;
+    visibility: hidden;
+    white-space: nowrap;
+    width: max-content;
+    z-index: 999;
+}
+
+.select.active .select-options {
+    visibility: visible;
+}
+
+.select-options .option {
+    border: 1px solid var(--border-hover);
+    border-top: none;
     background-color: var(--bg-secondary);
     color: var(--text-primary);
+    padding: 8px 36px 8px 12px;
+}
+
+.select-options .option:hover {
+    background-color: var(--bg-elevated);
 }

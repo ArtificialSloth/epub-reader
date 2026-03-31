@@ -93,11 +93,19 @@
     padding: 6px 12px;
 }
 
-.context-meta-label {
+.context-meta .meta-label {
     color: var(--text-muted);
     white-space: nowrap;
 }
 
-.context-meta-item {
+.context-meta .meta-item {
     text-align: right;
+}
+
+.book-settings .settings-item {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 8px;
 }

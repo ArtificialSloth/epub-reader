@@ -54,26 +54,28 @@ function ReaderHeader({ backBtnRef, fontSize, setFontSize, fontFamily, setFontFa
                 <button ref={settingsBtnRef} className='reader-settings-btn' title='Settings' onClick={onClickSettingsBtn}>Aa</button>
                 {menuPos &&
                     <ContextMenu parentRef={settingsBtnRef} x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
-                        <div className='settings-item'>
-                            <p>Font Size</p>
-                            <p><input type='number' value={fontSize} onChange={e => setFontSize(e.target.value)} />px</p>
-                        </div>
-                        <div className='settings-item'>
-                            <p>Font</p>
-                            <Select value={fontFamily} onChange={e => setFontFamily(e.target.value)}>
-                                <option value='initial'>Default</option>
-                                <option value='Times New Roman'>Times new Roman</option>
-                                <option value='sans-serif'>Sans-serif</option>
-                                <option value='monospace'>Monospace</option>
-                            </Select>
-                        </div>
-                        <div className='settings-item'>
-                            <p>Use ePub Styles</p>
-                            <input type='checkbox' checked={useEpubStyles} onChange={e => setUseEpubStyles(e.target.checked)} />
-                        </div>
-                        <div className='settings-item'>
-                            <p>Allow Popups</p>
-                            <input type='checkbox' checked={allowPopups} onChange={e => setAllowPopups(e.target.checked)} />
+                        <div className='reader-settings'>
+                            <div className='settings-label'>Font Size</div>
+                            <div className='settings-item'>
+                                <input type='number' value={fontSize} onChange={e => setFontSize(e.target.value)} />px
+                            </div>
+                            <div className='settings-label'>Font</div>
+                            <div className='settings-item'>
+                                <Select value={fontFamily} setValue={setFontFamily} options={[
+                                    { value: 'initial', label: 'Default', style: { fontFamily: 'initial' } },
+                                    { value: 'Times New Roman', label: 'Times New Roman', style: { fontFamily: 'Times New Roman' } },
+                                    { value: 'sans-serif', label: 'Sans-serif', style: { fontFamily: 'sans-serif' } },
+                                    { value: 'monospace', label: 'Monospace', style: { fontFamily: 'monospace' } },
+                                ]} />
+                            </div>
+                            <div className='settings-label'>Use ePub Styles</div>
+                            <div className='settings-item'>
+                                <input type='checkbox' checked={useEpubStyles} onChange={e => setUseEpubStyles(e.target.checked)} />
+                            </div>
+                            <div className='settings-label'>Allow Popups</div>
+                            <div className='settings-item'>
+                                <input type='checkbox' checked={allowPopups} onChange={e => setAllowPopups(e.target.checked)} />
+                            </div>
                         </div>
                     </ContextMenu>
                 }
@@ -82,7 +84,7 @@ function ReaderHeader({ backBtnRef, fontSize, setFontSize, fontFamily, setFontFa
                     <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3'></path></svg>
                 </button>
             </div>
-        </div>
+        </div >
         :
         <button className='reader-minimize-btn' title='Minimize' onClick={() => setFullscreen(false)}>
             <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3'></path></svg>
