@@ -27,7 +27,9 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            src-tauri/target
+            src-tauri/target/release/.fingerprint
+            src-tauri/target/release/build
+            src-tauri/target/release/deps
           key: windows-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
           restore-keys: windows-cargo-
 
