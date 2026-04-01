@@ -52,20 +52,22 @@ function BookCard({ identifier, book, onRemove }) {
         setMenuPos({ x: e.clientX, y: e.clientY });
     }
 
+    function renderCover() {
+        if (cover === 'loading') return <div className='loader'></div>;
+        else if (!cover) return <div className='cover-placeholder'>{book.title}</div>;
+        else if (cover === 'error') return (
+            <div className='book-cover-missing'>
+                <p className='missing-label'>{book.title}</p>
+                <p className='missing-text'>No valid sources found</p>
+            </div>
+        );
+        else return <img src={cover} alt="" />;
+    }
+
     return (
         <div className={`book-card ${menuPos ? 'context' : ''}`} onClick={onClick} onContextMenu={onContextMenu}>
             <div className='book-cover'>
-                {(() => {
-                    if (cover === 'error') return (
-                        <div className='book-cover-missing'>
-                            <p className='missing-label'>{book.title}</p>
-                            <p className='missing-text'>No valid sources found</p>
-                        </div>
-                    );
-                    else if (cover === 'loading') return <div className='loader'></div>;
-                    else if (cover === '') return <div className='cover-placeholder'>{book.title}</div>;
-                    else return <img src={cover} alt="" />;
-                })()}
+                {renderCover()}
             </div>
             <div className='book-footer'>
                 <div className='book-title'>{book.title}</div>

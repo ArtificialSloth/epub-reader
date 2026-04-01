@@ -10,8 +10,10 @@ fn prune_sources(library: &mut Library, identifier: &str, missing: &[String]) ->
         return Ok(false);
     }
     if let Some(book) = library.get_mut(identifier) {
-        book.sources.retain(|path| !missing.contains(path));
-        return Ok(true);
+        if missing.len() < book.sources.len() {
+            book.sources.retain(|path| !missing.contains(path));
+            return Ok(true);
+        }
     }
     Ok(false)
 }

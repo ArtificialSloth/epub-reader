@@ -56,8 +56,20 @@ button {
     transition: border-color 0.2s;
 }
 
-*:has(.loader-wrapper) {
-    overflow: hidden;
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
 }
 
 .loader-wrapper {

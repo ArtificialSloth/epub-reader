@@ -55,6 +55,7 @@
 .reader-settings .settings-label {
     align-items: center;
     display: flex;
+    white-space: nowrap;
 }
 
 .reader-settings .settings-item {

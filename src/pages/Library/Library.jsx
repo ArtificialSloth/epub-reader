@@ -49,6 +49,24 @@ function Library() {
         }
     }
 
+    function renderLibrary() {
+        if (library === 'loading') return <div className='loader-wrapper'><div className='loader'></div></div>;
+        else if (typeof library === 'string') return (
+            <div className='library-error'>
+                <p className='error-label'>There was an error loading your library:</p>
+                <p className='error-text'>{library}</p>
+            </div>
+        );
+        else if (Object.entries(library).length === 0) return <div className='library-empty'>No books yet. Click <strong>+ Add Book</strong> to get started.</div>;
+        else return (
+            <div className='library-grid'>
+                {sortedEntries().map(([identifier, book]) =>
+                    <BookCard key={identifier} identifier={identifier} book={book} onRemove={removeBook} />
+                )}
+            </div>
+        );
+    }
+
     return (
         <div className='library'>
             <div className='library-header'>
@@ -63,23 +81,7 @@ function Library() {
                     <button onClick={addBook}>+ Add Book</button>
                 </div>
             </div>
-            {(() => {
-                if (library === 'loading') return <div className='loader-wrapper'><div className='loader'></div></div>;
-                else if (typeof library === 'string') return (
-                    <div className='library-error'>
-                        <p className='error-label'>There was an error loading your library:</p>
-                        <p className='error-text'>{library}</p>
-                    </div>
-                );
-                else if (Object.entries(library).length === 0) return <div className='library-empty'>No books yet. Click <strong>+ Add Book</strong> to get started.</div>;
-                else return (
-                    <div className='library-grid'>
-                        {sortedEntries().map(([identifier, book]) =>
-                            <BookCard key={identifier} identifier={identifier} book={book} onRemove={removeBook} />
-                        )}
-                    </div>
-                );
-            })()}
+            {renderLibrary()}
         </div>
     );
 }
