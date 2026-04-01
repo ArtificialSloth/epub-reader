@@ -1006,7 +1006,6 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-cli",
  "tauri-plugin-dialog",
- "tauri-plugin-fs",
  "tauri-plugin-opener",
 ]
 

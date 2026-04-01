@@ -8,12 +8,8 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "fs:read-all",
-    "fs:write-all",
     "dialog:allow-open",
     "core:window:allow-set-size",
-    "core:window:allow-set-position",
-    "core:window:allow-center",
     "core:window:allow-set-title",
     "core:window:allow-set-fullscreen"
   ]

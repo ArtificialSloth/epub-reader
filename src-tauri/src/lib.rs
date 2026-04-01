@@ -32,24 +32,35 @@ pub fn run() {
             library_state: Mutex::new(library_state),
             current_book: Mutex::new(None),
         })
-        .register_uri_scheme_protocol("epub", |ctx, _request| { 
+        .register_uri_scheme_protocol("epub", |ctx, request| {
+            let allowed_origins = [
+                "http://tauri.localhost",
+                "tauri://localhost",
+                #[cfg(debug_assertions)]
+                "http://localhost:1420",
+            ];
+            let origin = request.headers()
+                .get("Origin")
+                .and_then(|v| v.to_str().ok())
+                .filter(|o| allowed_origins.contains(o))
+                .unwrap_or_default();
+
             let state = ctx.app_handle().state::<AppState>();
             let current_book = state.current_book.lock().unwrap();
             match current_book.as_ref() {
                 Some(data) => http::Response::builder()
                     .header("Content-Type", "application/epub+zip")
-                    .header("Access-Control-Allow-Origin", "*")
+                    .header("Access-Control-Allow-Origin", origin)
                     .body(data.clone())
                     .unwrap(),
                 None => http::Response::builder()
                     .status(404)
-                    .header("Access-Control-Allow-Origin", "*")
+                    .header("Access-Control-Allow-Origin", origin)
                     .body(vec![])
                     .unwrap(),
             }
         })
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_cli::init())
         .invoke_handler(tauri::generate_handler![

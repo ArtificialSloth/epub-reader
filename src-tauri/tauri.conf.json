@@ -19,7 +19,18 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline' blob:",
+        "font-src": "'self' blob: data:",
+        "img-src": "'self' blob: data: http://epub.localhost epub://localhost",
+        "connect-src": "'self' blob: data: ipc://localhost http://ipc.localhost http://epub.localhost epub://localhost",
+        "frame-src": "blob:",
+        "media-src": "blob: data:",
+        "object-src": "'none'",
+        "form-action": "'none'"
+      }
     }
   },
   "bundle": {
