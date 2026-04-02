@@ -9,7 +9,7 @@ function FoliateReader({ bookData, lastLocation, viewRef, onInit, onLoad, onRelo
         const view = document.createElement('foliate-view');
 
         const onResize = () => view?.renderer?.setAttribute('max-inline-size', `${container.clientWidth / 2}px`);
-        const observer = new ResizeObserver(([entry]) => {
+        const observer = new ResizeObserver(() => {
             observer.disconnect();
             viewRef.current = view;
             container.appendChild(view);
@@ -29,9 +29,11 @@ function FoliateReader({ bookData, lastLocation, viewRef, onInit, onLoad, onRelo
             });
 
             view.open(bookData)
-                .then(() => view.init({ lastLocation }))
                 .then(() => {
                     view.renderer.setAttribute('max-inline-size', `${container.clientWidth / 2}px`);
+                    return view.init({ lastLocation });
+                })
+                .then(() => {
                     window.addEventListener('resize', onResize);
                     onInit();
                 }).catch(err => console.error(err));

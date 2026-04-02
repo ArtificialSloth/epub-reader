@@ -16,7 +16,7 @@ function Reader({ identifier, book }) {
     const [allowPopups, setAllowPopups] = useBookSetting(identifier, 'allowPopups');
 
     const [expandToc, setExpandToc] = useState(false);
-    const [location, setLocation] = useState(book.current_location || '');
+    const [location, setLocation] = useState(book.current_location);
     const [progress, setProgress] = useState(0);
     const [chapter, setChapter] = useState('');
     const [page, setPage] = useState('');
@@ -170,7 +170,7 @@ function Reader({ identifier, book }) {
                     </button>
                     <FoliateReader
                         bookData={convertFileSrc('book.epub', 'epub')}
-                        lastLocation={book.current_location}
+                        lastLocation={location}
                         viewRef={viewRef}
                         onInit={onInit}
                         onLoad={onLoad}
