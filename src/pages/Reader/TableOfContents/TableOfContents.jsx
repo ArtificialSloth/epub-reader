@@ -1,21 +1,22 @@
 import './TableOfContents.css';
 import { useState, useEffect, Fragment } from 'react';
 
-function TableOfContents({ viewRef, expandToc, setExpandToc, backBtnRef }) {
+function TableOfContents({ viewRef, iFrameEventsRef, backBtnRef, expandToc, setExpandToc }) {
     useEffect(() => {
         function onMouseDown(e) { if (!backBtnRef.current?.contains(e.target)) setExpandToc(false); }
         function onKeyDown(e) { if (e.key === 'Escape') setExpandToc(false); }
-        function onBlur() { if (expandToc && document.activeElement?.tagName === 'FOLIATE-VIEW') setExpandToc(false); }
         function removeListeners() {
             document.removeEventListener('mousedown', onMouseDown);
+            iFrameEventsRef.current?.remove('mousedown', onMouseDown);
             document.removeEventListener('keydown', onKeyDown);
-            window.removeEventListener('blur', onBlur);
+            iFrameEventsRef.current?.remove('keydown', onKeyDown);
         }
 
         if (expandToc) {
             document.addEventListener('mousedown', onMouseDown);
+            iFrameEventsRef.current?.add('mousedown', onMouseDown);
             document.addEventListener('keydown', onKeyDown);
-            window.addEventListener('blur', onBlur);
+            iFrameEventsRef.current?.add('keydown', onKeyDown);
         } else removeListeners();
         return () => removeListeners();
     }, [expandToc]);

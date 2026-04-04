@@ -6,24 +6,72 @@ import { usePage } from '@/context/PageContext';
 import ContextMenu from '@/components/ContextMenu';
 import Select from '@/components/Select';
 
-function ReaderHeader({ backBtnRef, fontSize, setFontSize, fontFamily, setFontFamily, useEpubStyles, setUseEpubStyles, allowPopups, setAllowPopups }) {
+function ReaderHeader({ viewRef, iFrameEventsRef, backBtnRef, fontSize, setFontSize, fontFamily, setFontFamily, useEpubStyles, setUseEpubStyles, allowPopups, setAllowPopups }) {
     const { navigate } = usePage();
 
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [searchState, setSearchState] = useState('hidden');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
     const [menuPos, setMenuPos] = useState(null);
 
     const settingsBtnRef = useRef(null);
+    const searchTimeoutRef = useRef(null);
+    const searchResultsRef = useRef(searchResults);
 
     useEffect(() => {
         getCurrentWindow().isFullscreen().then(setIsFullscreen);
     }, []);
 
     useEffect(() => {
-        function onBlur() { if (menuPos && document.activeElement?.tagName === 'FOLIATE-VIEW') setMenuPos(null); }
-        if (menuPos) window.addEventListener('blur', onBlur);
-        else window.removeEventListener('blur', onBlur);
-        return () => window.removeEventListener('blur', onBlur);
-    }, [menuPos]);
+        function removeListeners() {
+            document.removeEventListener('keydown', onKeyDown);
+            iFrameEventsRef.current?.remove('keydown', onKeyDown);
+        }
+
+        if (searchState === 'open') {
+            document.addEventListener('keydown', onKeyDown);
+            iFrameEventsRef.current?.add('keydown', onKeyDown);
+        }
+        else removeListeners();
+        return () => removeListeners();
+    }, [searchState]);
+
+    useEffect(() => {
+        const view = viewRef.current;
+        if (!view || !searchQuery || searchQuery.length < 2) return;
+
+        let cancelled = false;
+        let generator = null;
+        async function search() {
+            const opts = {
+                query: searchQuery,
+                matchCase: false,
+                matchDiacritics: false,
+                matchWholeWords: false,
+            };
+            generator = view.search(opts);
+            for await (const result of generator) {
+                if (cancelled || result === 'done') break;
+                if (result.subitems) {
+                    let results = searchResultsRef.current;
+                    const index = results.findIndex(r => r.label === result.label);
+
+                    if (index > -1) results[index].subitems.push(...result.subitems);
+                    else results.push(result);
+                    setSearchResults([...results]);
+                }
+            }
+        }
+
+        searchResultsRef.current = [];
+        setSearchResults([]);
+        search();
+        return () => {
+            cancelled = true;
+            generator?.return();
+        };
+    }, [searchQuery]);
 
     function setFullscreen(fsn) {
         const win = getCurrentWindow();
@@ -36,6 +84,30 @@ function ReaderHeader({ backBtnRef, fontSize, setFontSize, fontFamily, setFontFa
     function onClickBackBtn() {
         invoke('close_book').then(() => navigate('library'))
             .catch((err) => console.error(err));
+    }
+
+    function onClickSearchBtn(e) {
+        e.stopPropagation();
+        setSearchState('open');
+    }
+
+    function onAnimationEnd() {
+        if (searchState === 'close') setSearchState('hidden');
+    }
+
+    function onKeyDown(e) {
+        e.stopPropagation();
+        if (e.key === 'Escape') setSearchState('close');
+    }
+
+    function onChange(e) {
+        clearTimeout(searchTimeoutRef.current);
+        searchTimeoutRef.current = setTimeout(() => setSearchQuery(e.target.value), 200);
+    }
+
+    function onClickSearchResult(cfi) {
+        setSearchState('hidden');
+        viewRef.current?.goTo(cfi);
     }
 
     function onClickSettingsBtn(e) {
@@ -51,9 +123,43 @@ function ReaderHeader({ backBtnRef, fontSize, setFontSize, fontFamily, setFontFa
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
             </button>
             <div className='reader-controls'>
+                {searchState === 'hidden' ?
+                    <button className='reader-search-btn' title='Search' onClick={onClickSearchBtn}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </button>
+                    :
+                    <div className='reader-search'>
+                        <input
+                            className={`search-input ${searchState === 'close' ? 'close' : ''}`}
+                            type='text'
+                            placeholder='Text to match...'
+                            defaultValue={searchQuery}
+                            autoFocus={true}
+                            onBlur={() => !searchQuery && setSearchState('close')}
+                            onAnimationEnd={(onAnimationEnd)}
+                            onKeyDown={onKeyDown}
+                            onChange={onChange}
+                        />
+                        {searchState === 'open' && searchResults.length > 0 &&
+                            <div className='search-results' onWheel={e => e.stopPropagation()}>
+                                {searchResults.map(result =>
+                                    <div key={result.label}>
+                                        <div className='label'>{result.label}</div>
+                                        {result.subitems.map(subitem =>
+                                            <div key={subitem.cfi} className='result' onClick={() => onClickSearchResult(subitem.cfi)}>
+                                                {subitem.excerpt.pre}<strong>{subitem.excerpt.match}</strong>{subitem.excerpt.post}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        }
+                    </div>
+                }
+
                 <button ref={settingsBtnRef} className='reader-settings-btn' title='Settings' onClick={onClickSettingsBtn}>Aa</button>
                 {menuPos &&
-                    <ContextMenu parentRef={settingsBtnRef} x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
+                    <ContextMenu parentRef={settingsBtnRef} iFrameEventsRef={iFrameEventsRef} x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
                         <div className='reader-settings'>
                             <div className='settings-label'>Font Size</div>
                             <div className='settings-item'>

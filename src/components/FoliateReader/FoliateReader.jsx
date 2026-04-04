@@ -8,7 +8,7 @@ function FoliateReader({ bookData, lastLocation, viewRef, onInit, onLoad, onRelo
         const container = containerRef.current;
         const view = document.createElement('foliate-view');
 
-        const onResize = () => view?.renderer?.setAttribute('max-inline-size', `${container.clientWidth / 2}px`);
+        function onResize() { view?.renderer?.setAttribute('max-inline-size', `${container.clientWidth / 2}px`); }
         const observer = new ResizeObserver(() => {
             observer.disconnect();
             viewRef.current = view;

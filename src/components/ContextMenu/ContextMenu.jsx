@@ -2,7 +2,7 @@ import './ContextMenu.css';
 import { createPortal } from 'react-dom';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 
-function ContextMenu({ parentRef, x, y, onClose, children }) {
+function ContextMenu({ parentRef, iFrameEventsRef, x, y, onClose, children }) {
     const ref = useRef(null);
 
     useLayoutEffect(() => {
@@ -18,10 +18,14 @@ function ContextMenu({ parentRef, x, y, onClose, children }) {
         function onMouseDown(e) { if (!parentRef.current?.contains(e.target)) onClose(); }
         function onKeyDown(e) { if (e.key === 'Escape') onClose(); }
         document.addEventListener('mousedown', onMouseDown);
+        iFrameEventsRef?.current?.add('mousedown', onMouseDown);
         document.addEventListener('keydown', onKeyDown);
+        iFrameEventsRef?.current?.add('keydown', onKeyDown);
         return () => {
             document.removeEventListener('mousedown', onMouseDown);
+            iFrameEventsRef?.current?.remove('mousedown', onMouseDown);
             document.removeEventListener('keydown', onKeyDown);
+            iFrameEventsRef?.current?.remove('keydown', onKeyDown);
         };
     }, [onClose]);
 

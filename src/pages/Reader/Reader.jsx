@@ -22,6 +22,19 @@ function Reader({ identifier, book }) {
     const [page, setPage] = useState('');
 
     const viewRef = useRef(null);
+    const iFrameRef = useRef(null);
+    const iFrameEventsRef = useRef({
+        listeners: [['keydown', onKeyDown], ['wheel', onWheel]],
+        add(type, handler) {
+            this.listeners.push([type, handler]);
+            iFrameRef.current?.addEventListener(type, handler);
+        },
+        remove(type, handler) {
+            this.listeners = this.listeners.filter(([, h]) => h !== handler);
+            iFrameRef.current?.removeEventListener(type, handler);
+        },
+    });
+
     const backBtnRef = useRef(null);
     const useEpubStylesRef = useRef(useEpubStyles);
     const allowPopupsRef = useRef(allowPopups);
@@ -111,9 +124,10 @@ function Reader({ identifier, book }) {
 
     function onLoad(e) {
         const { doc } = e.detail;
-        doc.addEventListener('keydown', onKeyDown);
-        doc.addEventListener('wheel', onWheel);
-        toggleEpubStyles(doc);
+        console.log(iFrameEventsRef.current.listeners);
+        iFrameEventsRef.current.listeners.forEach(event => doc.addEventListener(...event));
+        iFrameRef.current = doc;
+        toggleEpubStyles();
     }
 
     function onRelocate(e) { setLocation(e.detail.cfi); }
@@ -130,10 +144,8 @@ function Reader({ identifier, book }) {
         }
     }
 
-    function toggleEpubStyles(doc) {
-        doc = doc ?? viewRef.current?.renderer?.getContents()[0]?.doc;
-        if (!doc) return;
-        doc.querySelectorAll('link[rel="stylesheet"]').forEach(el => el.disabled = !useEpubStylesRef.current);
+    function toggleEpubStyles() {
+        iFrameRef.current?.querySelectorAll('link[rel="stylesheet"]').forEach(el => el.disabled = !useEpubStylesRef.current);
     }
 
     const prev = () => viewRef.current?.goLeft();
@@ -152,6 +164,8 @@ function Reader({ identifier, book }) {
     return (
         <div className='reader'>
             <ReaderHeader
+                viewRef={viewRef}
+                iFrameEventsRef={iFrameEventsRef}
                 backBtnRef={backBtnRef}
                 fontFamily={fontFamily}
                 setFontFamily={setFontFamily}
@@ -163,7 +177,13 @@ function Reader({ identifier, book }) {
                 setAllowPopups={setAllowPopups}
             />
             <div className={`reader-body ${expandToc ? 'expand' : ''}`}>
-                <TableOfContents viewRef={viewRef} expandToc={expandToc} setExpandToc={setExpandToc} backBtnRef={backBtnRef} />
+                <TableOfContents
+                    viewRef={viewRef}
+                    iFrameEventsRef={iFrameEventsRef}
+                    backBtnRef={backBtnRef}
+                    expandToc={expandToc}
+                    setExpandToc={setExpandToc}
+                />
                 <div className='reader-content'>
                     <button className='reader-nav prev' onClick={prev}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>

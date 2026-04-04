@@ -26,10 +26,6 @@
     color: var(--text-muted);
 }
 
-.reader-settings-btn {
-    padding: 8px 12px;
-}
-
 .reader-minimize-btn {
     position: absolute;
     right: 32px;
@@ -38,6 +34,68 @@
 
 .reader-controls {
     display: flex;
+}
+
+.reader-controls button {
+    padding: 8px 12px;
+}
+
+.reader-controls button:not(:has(+ .control-separator), :last-child),
+.reader-controls div:not(:has(+ .control-separator), :last-child) {
+    margin-right: 8px;
+}
+
+.reader-search {
+    align-items: center;
+    display: flex;
+    position: relative;
+}
+
+.reader-search .search-input {
+    transform-origin: right;
+    animation: search-expand 0.2s ease forwards;
+}
+.reader-search .search-input.close { animation: search-collapse 0.2s ease forwards; }
+@keyframes search-expand   { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes search-collapse { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+.reader-search .search-results {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    margin-top: 4px;
+    max-height: 50vh;
+    min-width: 100%;
+    overflow-y: auto;
+    padding: 8px;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    white-space: nowrap;
+    z-index: 999;
+}
+
+.reader-search .search-results .label,
+.reader-search .search-results .result {
+    padding: 8px 0 10px 0;
+}
+
+.reader-search .search-results .label {
+    border-bottom: 1px solid var(--panel-border);
+    font-weight: bold;
+    text-align: center;
+}
+
+.reader-search .search-results .result {
+    cursor: pointer;
+}
+
+.reader-search .search-results .result:hover {
+    background: var(--panel-hover);
+}
+
+.reader-search .search-results .result strong {
+    border: 1px solid red;
 }
 
 .control-separator {
