@@ -4,6 +4,7 @@ import { getMatches } from '@tauri-apps/plugin-cli';
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import { PageProvider, usePage } from '@/context/PageContext';
 import { CustomStylesProvider } from '@/context/CustomStylesContext';
+import { EventManagerProvider } from '@/context/EventManagerContext';
 import Library from '@/pages/Library';
 import Reader from '@/pages/Reader';
 
@@ -61,7 +62,9 @@ function App() {
     return (
         <PageProvider initPage={initPage}>
             <CustomStylesProvider customStyles={customStyles}>
-                <Routes />
+                <EventManagerProvider>
+                    <Routes />
+                </EventManagerProvider>
             </CustomStylesProvider>
         </PageProvider>
     );

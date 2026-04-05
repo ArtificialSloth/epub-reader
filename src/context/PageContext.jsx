@@ -16,6 +16,4 @@ export function PageProvider({ initPage, children }) {
     );
 }
 
-export function usePage() {
-    return useContext(PageContext);
-}
+export const usePage = () => useContext(PageContext);

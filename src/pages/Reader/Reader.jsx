@@ -4,12 +4,16 @@ import { invoke, convertFileSrc } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { useCustomStyles } from '@/context/CustomStylesContext';
+import { useEventManager } from '@/context/EventManagerContext';
 import { useBookSetting } from '@/hooks/useBookSetting';
 import FoliateReader from '@/components/FoliateReader';
 import TableOfContents from './TableOfContents';
 import ReaderHeader from './ReaderHeader/ReaderHeader';
 
 function Reader({ identifier, book }) {
+    const customStyles = useCustomStyles();
+    const eventManager = useEventManager();
+
     const [fontSize, setFontSize] = useState(localStorage.getItem('fontSize') || '18');
     const [fontFamily, setFontFamily] = useState(localStorage.getItem('font') || 'initial');
     const [useEpubStyles, setUseEpubStyles] = useBookSetting(identifier, 'useEpubStyles');
@@ -23,18 +27,6 @@ function Reader({ identifier, book }) {
 
     const viewRef = useRef(null);
     const iFrameRef = useRef(null);
-    const iFrameEventsRef = useRef({
-        listeners: [['keydown', onKeyDown], ['wheel', onWheel]],
-        add(type, handler) {
-            this.listeners.push([type, handler]);
-            iFrameRef.current?.addEventListener(type, handler);
-        },
-        remove(type, handler) {
-            this.listeners = this.listeners.filter(([, h]) => h !== handler);
-            iFrameRef.current?.removeEventListener(type, handler);
-        },
-    });
-
     const backBtnRef = useRef(null);
     const useEpubStylesRef = useRef(useEpubStyles);
     const allowPopupsRef = useRef(allowPopups);
@@ -43,14 +35,13 @@ function Reader({ identifier, book }) {
     const textPrimary = useMemo(() => getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(), []);
     const textLink = useMemo(() => getComputedStyle(document.documentElement).getPropertyValue('--text-link').trim(), []);
 
-    const customStyles = useCustomStyles();
+    const listeners = [['keydown', onKeyDown], ['wheel', onWheel]];
 
     useEffect(() => {
-        document.addEventListener('keydown', onKeyDown);
-        document.addEventListener('wheel', onWheel);
+        listeners.forEach(event => eventManager.add(...event));
         return () => {
-            document.removeEventListener('keydown', onKeyDown);
-            document.removeEventListener('wheel', onWheel);
+            listeners.forEach(event => eventManager.remove(...event));
+            eventManager.setIFrame(null);
         };
     }, []);
 
@@ -124,8 +115,7 @@ function Reader({ identifier, book }) {
 
     function onLoad(e) {
         const { doc } = e.detail;
-        console.log(iFrameEventsRef.current.listeners);
-        iFrameEventsRef.current.listeners.forEach(event => doc.addEventListener(...event));
+        eventManager.setIFrame(doc);
         iFrameRef.current = doc;
         toggleEpubStyles();
     }
@@ -165,7 +155,6 @@ function Reader({ identifier, book }) {
         <div className='reader'>
             <ReaderHeader
                 viewRef={viewRef}
-                iFrameEventsRef={iFrameEventsRef}
                 backBtnRef={backBtnRef}
                 fontFamily={fontFamily}
                 setFontFamily={setFontFamily}
@@ -179,7 +168,6 @@ function Reader({ identifier, book }) {
             <div className={`reader-body ${expandToc ? 'expand' : ''}`}>
                 <TableOfContents
                     viewRef={viewRef}
-                    iFrameEventsRef={iFrameEventsRef}
                     backBtnRef={backBtnRef}
                     expandToc={expandToc}
                     setExpandToc={setExpandToc}

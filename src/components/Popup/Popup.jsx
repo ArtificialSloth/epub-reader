@@ -1,15 +1,18 @@
 import './Popup.css';
 import { createPortal } from 'react-dom';
 import { useEffect } from 'react';
+import { useEventManager } from '@/context/EventManagerContext';
 
 function Popup({ onConfirm, onClose, children }) {
+    const eventManager = useEventManager();
+
     useEffect(() => {
         function onKeyDown(e) {
             if (e.key === 'Escape') onClose();
             if (e.key === 'Enter') onConfirm();
         }
-        document.addEventListener('keydown', onKeyDown);
-        return () => document.removeEventListener('keydown', onKeyDown);
+        eventManager.add('keydown', onKeyDown);
+        return () => eventManager.remove('keydown', onKeyDown);
     }, [onClose]);
 
     return createPortal(

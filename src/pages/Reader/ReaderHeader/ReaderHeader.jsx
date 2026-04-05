@@ -3,11 +3,13 @@ import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { usePage } from '@/context/PageContext';
+import { useEventManager } from '@/context/EventManagerContext';
 import ContextMenu from '@/components/ContextMenu';
 import Select from '@/components/Select';
 
-function ReaderHeader({ viewRef, iFrameEventsRef, backBtnRef, fontSize, setFontSize, fontFamily, setFontFamily, useEpubStyles, setUseEpubStyles, allowPopups, setAllowPopups }) {
+function ReaderHeader({ viewRef, backBtnRef, fontSize, setFontSize, fontFamily, setFontFamily, useEpubStyles, setUseEpubStyles, allowPopups, setAllowPopups }) {
     const { navigate } = usePage();
+    const eventManager = useEventManager();
 
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [searchState, setSearchState] = useState('hidden');
@@ -24,17 +26,9 @@ function ReaderHeader({ viewRef, iFrameEventsRef, backBtnRef, fontSize, setFontS
     }, []);
 
     useEffect(() => {
-        function removeListeners() {
-            document.removeEventListener('keydown', onKeyDown);
-            iFrameEventsRef.current?.remove('keydown', onKeyDown);
-        }
-
-        if (searchState === 'open') {
-            document.addEventListener('keydown', onKeyDown);
-            iFrameEventsRef.current?.add('keydown', onKeyDown);
-        }
-        else removeListeners();
-        return () => removeListeners();
+        if (searchState === 'open') eventManager.add('keydown', onKeyDown);
+        else eventManager.remove('keydown', onKeyDown);
+        return () => eventManager.remove('keydown', onKeyDown);
     }, [searchState]);
 
     useEffect(() => {
@@ -159,7 +153,7 @@ function ReaderHeader({ viewRef, iFrameEventsRef, backBtnRef, fontSize, setFontS
 
                 <button ref={settingsBtnRef} className='reader-settings-btn' title='Settings' onClick={onClickSettingsBtn}>Aa</button>
                 {menuPos &&
-                    <ContextMenu parentRef={settingsBtnRef} iFrameEventsRef={iFrameEventsRef} x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
+                    <ContextMenu parentRef={settingsBtnRef} x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)}>
                         <div className='reader-settings'>
                             <div className='settings-label'>Font Size</div>
                             <div className='settings-item'>

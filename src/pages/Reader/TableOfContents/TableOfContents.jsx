@@ -1,22 +1,22 @@
 import './TableOfContents.css';
-import { useState, useEffect, Fragment } from 'react';
+import { useEffect, Fragment } from 'react';
+import { useEventManager } from '@/context/EventManagerContext';
 
-function TableOfContents({ viewRef, iFrameEventsRef, backBtnRef, expandToc, setExpandToc }) {
+
+function TableOfContents({ viewRef, backBtnRef, expandToc, setExpandToc }) {
+    const eventManager = useEventManager();
+
     useEffect(() => {
         function onMouseDown(e) { if (!backBtnRef.current?.contains(e.target)) setExpandToc(false); }
         function onKeyDown(e) { if (e.key === 'Escape') setExpandToc(false); }
         function removeListeners() {
-            document.removeEventListener('mousedown', onMouseDown);
-            iFrameEventsRef.current?.remove('mousedown', onMouseDown);
-            document.removeEventListener('keydown', onKeyDown);
-            iFrameEventsRef.current?.remove('keydown', onKeyDown);
+            eventManager.remove('mousedown', onMouseDown);
+            eventManager.remove('keydown', onKeyDown);
         }
 
         if (expandToc) {
-            document.addEventListener('mousedown', onMouseDown);
-            iFrameEventsRef.current?.add('mousedown', onMouseDown);
-            document.addEventListener('keydown', onKeyDown);
-            iFrameEventsRef.current?.add('keydown', onKeyDown);
+            eventManager.add('mousedown', onMouseDown);
+            eventManager.add('keydown', onKeyDown);
         } else removeListeners();
         return () => removeListeners();
     }, [expandToc]);

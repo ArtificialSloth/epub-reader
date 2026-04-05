@@ -10,6 +10,4 @@ export function CustomStylesProvider({ customStyles, children }) {
     );
 }
 
-export function useCustomStyles() {
-    return useContext(CustomStylesContext);
-}
+export const useCustomStyles = () => useContext(CustomStylesContext);
