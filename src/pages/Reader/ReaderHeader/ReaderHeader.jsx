@@ -1,7 +1,8 @@
 import './ReaderHeader.css';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { Overlayer } from '@/lib/foliate-js/overlayer.js';
 import { usePage } from '@/context/PageContext';
 import { useEventManager } from '@/context/EventManagerContext';
 import ContextMenu from '@/components/ContextMenu';
@@ -20,6 +21,8 @@ function ReaderHeader({ viewRef, backBtnRef, fontSize, setFontSize, fontFamily, 
     const settingsBtnRef = useRef(null);
     const searchTimeoutRef = useRef(null);
     const searchResultsRef = useRef(searchResults);
+
+    const highlight = useMemo(() => getComputedStyle(document.documentElement).getPropertyValue('--highlight').trim(), []);
 
     useEffect(() => {
         getCurrentWindow().isFullscreen().then(setIsFullscreen);
@@ -43,6 +46,8 @@ function ReaderHeader({ viewRef, backBtnRef, fontSize, setFontSize, fontFamily, 
                 matchCase: false,
                 matchDiacritics: false,
                 matchWholeWords: false,
+                draw: Overlayer.highlight,
+                drawOptions: { color: highlight },
             };
             generator = view.search(opts);
             for await (const result of generator) {

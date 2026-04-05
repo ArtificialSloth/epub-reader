@@ -97,7 +97,9 @@
 }
 
 .reader-search .search-results .result strong {
-    border: 1px solid red;
+    background: color-mix(in srgb, var(--highlight) calc(var(--overlayer-highlight-opacity) * 100%), transparent);
+    background-blend-mode: var(--overlayer-highlight-blend-mode);
+    font-weight: normal;
 }
 
 .control-separator {

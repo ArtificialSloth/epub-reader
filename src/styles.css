@@ -37,6 +37,10 @@
     --panel-hover:    #162240;
     --danger-hover:   #7a2828;
 
+    --highlight:      #f5a623;
+    --overlayer-highlight-opacity: 0.5;
+    --overlayer-highlight-blend-mode: screen;
+
     color: var(--text-primary);
     background-color: var(--bg-primary);
 }
