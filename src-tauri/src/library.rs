@@ -35,7 +35,7 @@ pub fn save(library_state: &mut LibraryState) -> Result<(), String> {
 
 #[tauri::command]
 pub fn get_library(state: State<'_, AppState>) -> Result<Library, String> {
-    let library = state.library_state.lock().unwrap().library.clone();
+    let library = state.library_state.lock().unwrap_or_else(|e| e.into_inner()).library.clone();
     Ok(library)
 }
 
@@ -53,7 +53,7 @@ pub fn add_book(state: State<'_, AppState>, path: String) -> Result<String, Stri
         .map(|m| m.value.clone())
         .unwrap_or_else(|| format!("{}:{}", title, author));
 
-    let mut library_state = state.library_state.lock().unwrap();
+    let mut library_state = state.library_state.lock().unwrap_or_else(|e| e.into_inner());
     library_state.library.entry(identifier.clone())
         .and_modify(|b| {
             if !b.sources.contains(&path) {
@@ -75,7 +75,7 @@ pub fn add_book(state: State<'_, AppState>, path: String) -> Result<String, Stri
 
 #[tauri::command]
 pub fn remove_book(state: State<'_, AppState>, identifier: String) -> Result<Option<Book>, String> {
-    let mut library_state = state.library_state.lock().unwrap();
+    let mut library_state = state.library_state.lock().unwrap_or_else(|e| e.into_inner());
     let book = library_state.library.remove(&identifier);
     
     save(&mut library_state)?;

@@ -38,7 +38,7 @@ fn load_epub_doc(library_state: &mut LibraryState, identifier: &str) -> Result<(
 
 #[tauri::command]
 pub fn get_cover(state: State<'_, AppState>, identifier: String) -> Result<Option<String>, String> {
-    let mut library_state = state.library_state.lock().unwrap();
+    let mut library_state = state.library_state.lock().unwrap_or_else(|e| e.into_inner());
     let (_, mut doc) = load_epub_doc(&mut library_state, &identifier)?;
     Ok(doc.get_cover().map(|(data, mime)| {
         format!("data:{};base64,{}", mime, STANDARD.encode(data))
@@ -47,10 +47,10 @@ pub fn get_cover(state: State<'_, AppState>, identifier: String) -> Result<Optio
 
 #[tauri::command]
 pub fn open_book(state: State<'_, AppState>, identifier: String) -> Result<Book, String> {
-    let mut library_state = state.library_state.lock().unwrap();
+    let mut library_state = state.library_state.lock().unwrap_or_else(|e| e.into_inner());
     let (path, _) = load_epub_doc(&mut library_state, &identifier)?;
 
-    let mut current_book = state.current_book.lock().unwrap();
+    let mut current_book = state.current_book.lock().unwrap_or_else(|e| e.into_inner());
     *current_book = Some(std::fs::read(path).map_err(|e| e.to_string())?);
 
     let book = library_state.library.get_mut(&identifier).ok_or_else(|| format!("no entry for {}", identifier))?;
@@ -63,8 +63,8 @@ pub fn open_book(state: State<'_, AppState>, identifier: String) -> Result<Book,
 
 #[tauri::command]
 pub fn close_book(state: State<'_, AppState>) -> Result<(), String> {    
-    let mut library_state = state.library_state.lock().unwrap();
-    let mut current_book = state.current_book.lock().unwrap();
+    let mut library_state = state.library_state.lock().unwrap_or_else(|e| e.into_inner());
+    let mut current_book = state.current_book.lock().unwrap_or_else(|e| e.into_inner());
     *current_book = None;
 
     library::save(&mut library_state)?;
@@ -73,7 +73,7 @@ pub fn close_book(state: State<'_, AppState>) -> Result<(), String> {
 
 #[tauri::command]
 pub fn save_progress(state: State<'_, AppState>, identifier: String, location: String) -> Result<Book, String> {
-    let mut library_state = state.library_state.lock().unwrap();
+    let mut library_state = state.library_state.lock().unwrap_or_else(|e| e.into_inner());
     let book = library_state.library.get_mut(&identifier).ok_or_else(|| format!("no entry for {}", identifier))?;
 
     book.current_location = location;

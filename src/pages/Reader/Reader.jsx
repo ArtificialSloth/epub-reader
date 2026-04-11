@@ -10,12 +10,15 @@ import FoliateReader from '@/components/FoliateReader';
 import TableOfContents from './TableOfContents';
 import ReaderHeader from './ReaderHeader/ReaderHeader';
 
+const sanitizeCssString = (value) => /[{};]/.test(value) ? '' : value;
+const sanitizeCssNumber = (value) => !Number.isFinite(Number(value)) ? '' : value;
+
 function Reader({ identifier, book }) {
     const customStyles = useCustomStyles();
     const eventManager = useEventManager();
 
-    const [fontSize, setFontSize] = useState(localStorage.getItem('fontSize') || '18');
-    const [fontFamily, setFontFamily] = useState(localStorage.getItem('font') || 'initial');
+    const [fontSize, setFontSize] = useState(sanitizeCssNumber(localStorage.getItem('fontSize')) || '18');
+    const [fontFamily, setFontFamily] = useState(sanitizeCssString(localStorage.getItem('fontFamily')) || 'initial');
     const [useEpubStyles, setUseEpubStyles] = useBookSetting(identifier, 'useEpubStyles');
     const [allowPopups, setAllowPopups] = useBookSetting(identifier, 'allowPopups');
 
@@ -57,7 +60,7 @@ function Reader({ identifier, book }) {
 
     useEffect(() => {
         if (!fontFamily) return;
-        localStorage.setItem('font', fontFamily);
+        localStorage.setItem('fontFamily', fontFamily);
         buildStyles();
     }, [fontFamily]);
 

@@ -46,7 +46,7 @@ pub fn run() {
                 .unwrap_or_default();
 
             let state = ctx.app_handle().state::<AppState>();
-            let current_book = state.current_book.lock().unwrap();
+            let current_book = state.current_book.lock().unwrap_or_else(|e| e.into_inner());
             match current_book.as_ref() {
                 Some(data) => http::Response::builder()
                     .header("Content-Type", "application/epub+zip")
@@ -78,7 +78,7 @@ pub fn run() {
         .run(|app_handle, event| match event {
             tauri::RunEvent::Exit {} => {
                 let state = app_handle.state::<AppState>();
-                let mut library_state = state.library_state.lock().unwrap();
+                let mut library_state = state.library_state.lock().unwrap_or_else(|e| e.into_inner());
                 library::save(&mut library_state).expect("error while saving library");
             }
             _ => {}
