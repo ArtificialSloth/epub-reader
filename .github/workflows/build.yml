@@ -7,6 +7,8 @@ on:
 
 jobs:
   build-windows:
+    permissions:
+      contents: write
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,9 +43,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload executable
+      - name: Get version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: windows-executable
+          name: epub-reader-v${{ steps.version.outputs.version }}
           path: src-tauri/target/release/epub-reader.exe
           if-no-files-found: error
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: epub-reader-v${{ steps.version.outputs.version }}
+          name: "epub-reader-v${{ steps.version.outputs.version }}"
+          draft: true
+          prerelease: false
+          files: src-tauri/target/release/epub-reader.exe
